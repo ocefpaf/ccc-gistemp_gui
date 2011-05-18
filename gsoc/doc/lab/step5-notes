@@ -1,0 +1,318 @@
+                            Notes on STEP5
+             Nick Barnes, Ravenbrook Limited, 2009-06-23
+
+1. Introduction
+
+These are notes on STEP5 of GISTEMP, made as part of the CCC-GISTEMP
+project.
+
+2. I/O in the original GISTEMP STEP5
+
+do_comb_step5.sh [<R>, default 100], which farms some script work out
+to zonav ho2.GHCN.CL.PA, drives this.  It moves files around and
+renames them to take advantage of Fortran's implicit filenames and to
+allow each Fortran program to be oblivious to the names of actual data
+files.  Disregarding that, STEP5 consists of 3 Fortran programs do,
+which act as follows:
+
+input_files/SBBX1880.Ts.GHCN.CL.PA.1200 [10]
+input_files/SBBX.HadR2 [11]
+
+-> SBBXotoBX.f <R> 0
+   "C *** This program combines 8000 subbox to 80 box data"
+   ->
+
+[12] BX.Ts.ho2.GHCN.CL.PA.1200 [11]
+
+(SBBXotoBX.f also simultaneously combines the ocean data from the
+SBBX.HadR2 file)
+
+-> zonav.f
+   "C**** This program combines the given gridded data (anomalies)
+    C**** to produce AVERAGES over various LATITUDE BELTS."
+    ->
+
+[stdout] zonav.Ts.ho2.GHCN.CL.PA.log
+[10] work_files/ZON.Ts.ho2.GHCN.CL.PA.1200.step1
+
+-> annzon.f
+   "C *** program reads ZONAL monthly means and recomputes REGIONAL means
+    C *** as well as annual means."
+   ->
+
+[stdout] annzon.Ts.ho2.GHCN.CL.PA.log
+[96] results/ZonAnn.Ts.ho2.GHCN.CL.PA.txt
+[97] results/GLB.Ts.ho2.GHCN.CL.PA.txt
+[98] results/NH.Ts.ho2.GHCN.CL.PA.txt
+[99] results/SH.Ts.ho2.GHCN.CL.PA.txt
+[12] work_files/ZON.Ts.ho2.GHCN.CL.PA.1200
+[11] work_files/ANNZON.Ts.ho2.GHCN.CL.PA.1200
+[10] deleted
+
+2. After reorganising
+
+We threw away all the driver shell scripts (which were written in ksh)
+and wrote run.sh.  At the same time we reorganised all files into
+directories (work/ input/ result/ and log/), stopped deleting and
+renaming intermediate files, and made minor edits to the Fortran to
+accommodate this.  Following this (looking at the code at SVN revision
+level 66), step 5 does this (in run.sh):
+
+  GFORTRAN_CONVERT_UNIT="big_endian:10,11,12" bin/SBBXotoBX.exe 100 0 > log/SBBXotoBX.log
+  GFORTRAN_CONVERT_UNIT="big_endian:10,11" bin/zonav.exe > log/zonav.Ts.ho2.GHCN.CL.PA.log
+  GFORTRAN_CONVERT_UNIT="big_endian:10,11,12" bin/annzon.exe  > log/annzon.Ts.ho2.GHCN.CL.PA.log
+
+The GFORTRAN_CONVERT_UNIT directives make sure that each program uses
+big-endian format when reading and writing binary data.
+When viewed one program at a time, this is what they do:
+
+2.1. SBBXotoBX.f
+
+Reads:
+  unit 10: work/SBBX1880.Ts.GHCN.CL.PA.1200
+           big-endian binary data giving the monthly mean temperature
+           anomaly, derived from land surface stations, for each of 8000
+           "sub-boxes".  Produced by STEP3.
+  unit 11: input/SBBX.HadR2
+           big-endian binary data giving the monthly mean temperature
+           anomaly, derived from sea-surface observations, for each of 8000
+           "sub-boxes".  Produced by STEP4 (or available from GISS).
+Writes:
+  unit 12: result/BX.Ts.ho2.GHCN.CL.PA.1200
+           big-endian binary data giving the monthly mean temperature
+           anomaly, and area weight, for each of 80 "boxes".
+  unit 6:  (stdout) log/SBBXotoBX.log
+           text log showing the results, monthly mean temperature
+           anomalies and area weight
+
+2.2. zonav.f
+
+Reads:
+  unit 11: result/BX.Ts.ho2.GHCN.CL.PA.1200
+           Just written by SBBXotoBX.f; See above.
+
+Writes:
+  unit 10: work/ZON.Ts.ho2.GHCN.CL.PA.1200.step1
+           big-endian binary data giving monthly mean temperature
+           anomaly, and area weight, for each of 14 zones (8
+           latitudinal belts, 3 broader belts, the northern and
+           southern hemispheres, and the whole globe).  The narrow
+           zones correspond to the box borders.  The full set of zones
+           is:
+              1 64N - 90N
+              2 44N - 64N (asin 0.9)
+              3 24N - 44N (asin 0.7)
+              4 Equ - 24N (asin 0.4)
+              5 24S - Equ
+              6 44S - 24S
+              7 64S - 44S
+              8 90S - 64S
+              9 24N - 90N
+             10 24S - 24N
+             11 90S - 24S
+             12 northern hemisphere
+             13 southern hemisphere
+             14 global
+
+  unit 6:  (stdout) log/zonav.Ts.ho2.GHCN.CL.PA.log
+           text log showing the same results.
+
+2.3. annzon.f
+
+Reads
+  unit 10: work/ZON.Ts.ho2.GHCN.CL.PA.1200.step1
+           big-endian binary zone data, as above.
+
+Writes:
+  unit 96: result/ZonAnn.Ts.ho2.GHCN.CL.PA.txt
+  unit 98: result/NH.Ts.ho2.GHCN.CL.PA.txt
+  unit 99: result/SH.Ts.ho2.GHCN.CL.PA.txt
+  unit 12: work/ZON.Ts.ho2.GHCN.CL.PA.1200
+  unit 11: work/ANNZON.Ts.ho2.GHCN.CL.PA.1200
+  unit 6:  (stdout) log/annzon.Ts.ho2.GHCN.CL.PA.log
+
+3. SBBXotoBX.f details
+
+This reads land data (work/SBBX1880.Ts.GHCN.CL.PA.1200) and ocean data
+(input/SBBX.HadR2), which are in very similar forms, and combines
+them.
+
+For each box:
+  for each sub-box:
+    read the land data to first half of AVG array
+    read the ocean data to second half of AVG array
+    put the counts of valid land and ocean data values into WGTC array
+    calculate an ocean weight WOCN
+    use this to re-weight the WGTC counts
+  sort the WGTC array, i.e. sort the land and ocean data records in order
+  of decreasing weight.
+  Initialize weighted average from highest-weighted record.
+  For all the other records with weight >= 12 * NOVRLP, in order of decreasing weight:
+    Combine (CMBINE) the record into the weighted average
+  Using the combined data:
+    Calculate the "bias" (average over the base period) for each month
+    of the year using TAVG (see below), and subtract it from every
+    data value.
+  Write the de-biased combined data to the output file and the log.
+
+The subroutines CMBINE, TAVG, and SORT are identical to STEP3
+to.SBBXgrid.f, except in two respects:
+
+- CMBINE in SBBXotoBX.f logs an " UNUSED DATA" line to stdout if any
+  months have not combined.  This does not happen.
+
+- SORT uses an array of REAL weights, not INTEGER ones.
+
+For CMBINE, see the comment and docstring for the corresponding Python
+function in STEP3.
+
+The subroutine GRIDEA is effectively the same as that in the STEP3
+files and zonav: certainly it produces the same set of boxes and
+sub-boxes.  The results are only used for the coordinates of the boxes
+(not the sub-boxes), and for setting the AREA() array to 1.
+
+Note: The ocean weight (wocn) is calculated in three separate places,
+with a subtle difference which may be a bug.  In the first place
+(lines 173-176) it is calculated for each sub-box.  In the second
+and third places (191-194, 210-213) it is calculated for a data
+record (either land or ocean).  For an ocean record, when the number
+of valid data items is less than 12 * NOVRLP, (i.e. 240), and dist
+>= Rland (i.e. 100), the first calculation will produce wocn = 0
+but the latter two calculations will produce wocn > 0 (wocn = 1
+when Rintrp == 0, which it does).
+
+In fact, it is slightly worse than we (originally) thought.  In the
+second and third places where the ocean weight is calculated, the WGTC
+array is abused.  Line 193 (and the identical line 212) accesses
+WGTC(nc+ncm) when nc indexes a land cell.  The intention seems to be to
+consider the record length of the ocean cell corresponding to this land
+cell.  However, WGTC has been sorted ("CALL SORT", line 187), so
+WGTC(nc+ncm) does not access the WGTC element for the corresponding
+ocean cell, but merely *a* cell (land or ocean) in the region (one
+that appears in the "bottom 100 cells by record length").
+
+The overall effect of this is to (more or less) randomly "promote" some
+land cells where DIST > Rland and give them positive weight, even when
+there is ocean data for that location.  It may be the case that for some
+particular cell both land and ocean data end up being combined.
+
+Note: the AREA array (filled in by GRIDEA, then later multiplied
+cell-wise by the area of one subbox) is accessed a few times.  The
+access on line 198 (just before the FORTRAN label 205) looks suspect.
+The array is indexed using the variable NC; sadly this variable can
+be in the range 1 to 200, whereas the array index should range from
+1 to 100.  Because of the way FORTRAN arrays are laid out in memory,
+and the fact that the array element values are constant, this is
+harmless for all but the highest numbered box (when NR is 80).  For
+this box, if NC > 100 (in other words, an ocean value) we will read
+off the end of the array.  Which seems bad to me [drj].  This only
+affects the first subbox considered for the box.  They are sorted
+essentially by record length, so this bug only comes up if the
+longest subbox record in region 80 is an ocean cell.  Box 80, by
+the way, is bounded by -64.2 on the north, -90 on the south, +90
+on the west, and +180 on the east.  Eyeballing the HadSST2 grid and
+the GISTEMP grid, it looks like that box has very little ocean data,
+and lots of (presumably interpolated) land data.
+
+Note: setting wocn to zero when fewer than 12 * NOVRLP ocean values is
+premature optimization because these ocean records won't be combined
+anyway because we only combine records with weight over 12 * NOVRLP.
+
+Note: TAVG calculates the "bias", i.e. time average over the base
+period 1961-1990, for each month of the year, for a record.  But if
+there is a month of the year for which there is no valid data in the
+base period, it calculates a bias over every year in the record.
+Given that we have a hypothesis that there is a trend in the data, and
+the base period may not be central to this trend, this is surely
+bogus.  It doesn't appear to actually happen in SBBXotoBX.f, because
+the boxes are so large that each box has at least some valid data in
+at least one year of the base period for each month of the year.
+However, it surely happens in STEP3 (where the identical code is
+applied to sub-boxes) ?
+
+4. zonav.f details
+
+STEP4_5/zonav.f is identical to STEP3/zonav.f
+
+[the zonav notes are somewhat under construction, ask drj if you need to]
+
+The Fortran code variously refers to belt and bands and zones.  Here I
+try to use "belt" for the 8 basic latitude belts (4 in each hemisphere,
+the same belts used to form the equal area 80 boxes).  And "zone" for
+the combined zones that are made from combinations of belts:
+
+There are 6 large zones are defined as various combinations of the
+8 belts.  The KZONE array maintains the characteristic function:
+KZONE(b,c) is 1 when belt b is part of combined zone c.  b ranges
+from 1 to 8, c from 1 to 6.  Let xxxx-yyyy be the 8 basic zones (from
+North on the left to South on the right).  The combined zones are as
+follows:
+
+1110-0000 northern (N-T)
+0001-1000 tropical T
+0000-0111 southern (S-T)
+1111-0000 northern hemisphere N
+0000-1111 southern hemisphere S
+1111-1111 global N+S
+
+We can define T, N, and S as "primitives" and then compose the other
+combined zones using set operations. (I don't know whether this is
+useful, but it's cute).
+
+Useful to note:
+
+JBM=8 (number of belts)
+NZS=3 (number of "special" zones.  which is 3 less than the number of
+  zones. *sigh*)
+
+In detail:
+
+line 97 to 106: gather metadata from input file.
+
+line 129 to 177: for each belt:
+  Combine the records the the regions in that belt (by reading them from
+  the BX file into AR and WTR), sorting them to combine longer regions
+  first.
+  line 160 to 176: the record for the belt is biased to make it zero on
+    average for the reference period, and it is written to the output
+    file (unit 10)
+
+line 181: The 8 belts are then sorted by record length. (so that when
+they are combined into zones, below, the longest record is used first)
+
+line 182 to 217: for each zone (6 of them)
+  combine the belts that comprise that zone into a single record, rebias
+  it and write it out to disk.  Details follow:
+  line 188 to 190: find the longest belt that is in the zone.
+  line 191 to 194: and initialise WTG and AVGG with that belt's record
+  line 196 to 201: and the loop over the rest of the belts, calling
+  CMBINE to add in the belts that are included in the zone.
+  line 203 and following: rebias and write to disk.
+
+5. annzon.f
+
+[not written yet, see drj]
+
+JZM=14 (the number of zones)
+MONMIN=6 (the minimum number of months to compute an annual anomaly)
+IAVGGH=2 (alternate global and hemispheric means)
+
+JZG records which zones comprise the alternate global mean computation
+(alternate 2 is in fact used by default, see IAVGGH).  They are:
+Alternate 1: 9,10,10,11; Alternate 2: 9,4,5,11 (see array literal at
+annzon.f line 50).  These 4 zones are combined with weights 3,2,2,3
+respectively (see WTSP array, line 51).  These weights are proportional
+to the area of the zone (for these particlar zones).
+
+line 53 to 83: open file, read header, allocate arrays.
+line 84 to 97: write header.
+line 98 to 103: read data.
+line 104 to 122: Compute annual means.
+
+Note: the output files say "base period 1951-1980".  But the
+de-biasing we've just been looking at in SBBXotoBX.f uses a base
+period of IYBASE-LYBASE, i.e. 1961-1990 (these are parameters in
+SBBXotoBX.f).  Of course, this data has already been de-biased in
+STEP3, with a base period of 1951-1980.  Is this all sensible and
+legitimate?  They are (yet again) rebiased to have a base period of
+1951-1980 by zonav.f (which is run immediately before zonav.f)
