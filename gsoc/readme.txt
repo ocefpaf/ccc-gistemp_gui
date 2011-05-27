@@ -21,7 +21,7 @@ CONTENTS
 
 1. INTRODUCTION
 
-This is release 0.6.0 of the Clear Climate Code GISTEMP project
+This is release 0.6.1 of the Clear Climate Code GISTEMP project
 (ccc-gistemp).
 
 Clear Climate Code have reimplemented GISTEMP (the GISS surface
@@ -34,6 +34,8 @@ The purpose of version 0.6 is to make ccc-gistemp more useful by:
     USHCN only; ocean only.
   - allowing a land mask to be used in the step where land and ocean
     data are combined.
+  - making use on NumPy array.
+  - adding a setup.py
 
 In addition there are various bug fixes and improvements to clarity.
 
