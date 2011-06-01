@@ -1,4 +1,4 @@
-CLEAR CLIMATE CODE GISTEMP README FOR RELEASE 0.5.1
+CLEAR CLIMATE CODE GISTEMP README FOR RELEASE 0.6.1
 
 Nick Barnes, Climate Code Foundation
 David Jones, Climate Code Foundation
