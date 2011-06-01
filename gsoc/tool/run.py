@@ -25,8 +25,8 @@ import re
 import sys
 
 # Clear Climate Code
-import extend_path
-import gio
+from tool import extend_path
+from tool import gio
 
 class Fatal(Exception):
     pass
@@ -110,7 +110,7 @@ def vischeck(data):
     for _ in data:
         pass
     log("... running vischeck")
-    import vischeck
+    from tool import vischeck
     vischeck.chartit(
       [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
       out = open(os.path.join('result', 'google-chart.url'), 'w'))
