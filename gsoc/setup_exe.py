@@ -4,15 +4,11 @@
 #
 # setup.py
 #
-# Filipe Fernandes, 2011-05-29
+# Filipe Fernandes, 2011-06-02
 
 from distutils.core import setup
 from distutils.command.sdist import sdist
-
-try: # Python 3
-  from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError: # Python 2
-  from distutils.command.build_py import build_py
+import py2exe
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -28,6 +24,8 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
+data_files = [('config', ['config/Ts.trange.RSU.list.IN',
+                          'config/step1_adjust'])]
 
 setup(name = 'ccc-gistemp',
       version = '0.6.1',
@@ -39,14 +37,15 @@ a reconstruction of the global historical temperature record from land and sea
 surface temperature records. It produces a familiar graph of historical
 temperatures
       """,
-      long_description = open('readme.txt').read(), # change to capitals
+      long_description = open('readme.txt').read(),
       author = 'Nick Barnes, David Jones',
       author_email = 'ccc-gistemp@climatecode.org',
       url = 'http://code.google.com/p/ccc-gistemp/',
       download_url =
       'http://ccc-gistemp.googlecode.com/files/ccc-gistemp-0.6.1.tar.gz',
       classifiers = filter(None, classifiers.split("\n")),
-      platforms = 'any',
+      platforms = 'windows',
+      data_files = data_files,
       cmdclass = {'build_py': build_py},
       keywords = ['science', 'climate', 'GIS', 'temperature'],
      )
