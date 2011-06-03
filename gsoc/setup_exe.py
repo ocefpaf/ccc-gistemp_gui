@@ -6,9 +6,10 @@
 #
 # Filipe Fernandes, 2011-06-02
 
+import os
+import py2exe
 from distutils.core import setup
 from distutils.command.sdist import sdist
-import py2exe
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -24,8 +25,8 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
-data_files = [('config', ['config/Ts.trange.RSU.list.IN',
-                          'config/step1_adjust'])]
+data_files = [('config', (os.path.join('config','Ts.strange.RSU.list.IN'),
+                          os.path.join('config','step1_adjust'),))]
 
 setup(name = 'ccc-gistemp',
       version = '0.6.1',
