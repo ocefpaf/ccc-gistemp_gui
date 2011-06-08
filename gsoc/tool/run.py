@@ -211,14 +211,16 @@ def main(argv=None):
 
     step_list = options.steps
     try:
-        rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        if os.getcwd() != rootdir:
-            raise Fatal("The GISTEMP procedure must be run from the root "
-                        "directory of the project.\nPlease change directory "
-                        "to %s and try again." % rootdir)
+        # FIXME: The code bellow is commented so run can create a "input" dir 
+        # from where it is called.
+        #rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        #if os.getcwd() != rootdir:
+            #raise Fatal("The GISTEMP procedure must be run from the root "
+                        #"directory of the project.\nPlease change directory "
+                        #"to %s and try again." % rootdir)
 
         # Carry out preflight checks and fetch missing files.
-        import preflight
+        from tool import preflight
         preflight.checkit(sys.stderr)
 
         # Create all the temporary directories we're going to use.
