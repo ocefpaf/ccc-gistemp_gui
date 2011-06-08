@@ -1,6 +1,13 @@
 #!/usr/bin/env python
+# $URL$
+# $Rev$
+#
+# gui.py
+#
+# Filipe Fernandes, 2011-06-05
 
-"""Hello, wxPython! program."""
+
+"""GUI MainLoop program."""
 
 import wx
 
@@ -8,6 +15,7 @@ class Frame(wx.Frame):
     """Frame class that display an image."""
 
     #pass
+
     def __init__(self, image, parent=None, id=-1,
                  pos=wx.DefaultPosition,
                  title='Hello, wxPython!'):
