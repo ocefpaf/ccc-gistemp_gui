@@ -31,6 +31,18 @@ data_files = [('config', (os.path.join('config','Ts.strange.RSU.list.IN'),
 setup(name = 'ccc-gistemp',
       version = '0.6.1',
       packages = ['code','tool'],
+      console=[{"script": 'tool/run.py',
+      "icon_resources": [(1, "world_globe.ico")]}],
+      options = {"py2exe": {
+                            "compressed":2,
+                            "optimize":2,
+                            "bundle_files":2,
+                            "dist_dir":'dist',
+                            "xref":False,
+                            "skip_archive":False,
+                            "ascii": False,
+                            "custom_boot_script":''
+                            }},
       license = 'LICENSE.txt',
       description = """
 ccc-gistemp is a reimplementation of GISTEMP in Python for clarity. GISTEMP is
@@ -47,6 +59,5 @@ temperatures
       classifiers = filter(None, classifiers.split("\n")),
       platforms = 'windows',
       data_files = data_files,
-      cmdclass = {'build_py': build_py},
       keywords = ['science', 'climate', 'GIS', 'temperature'],
      )
