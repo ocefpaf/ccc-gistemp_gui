@@ -97,7 +97,7 @@ def run_step4(data):
     return gio.step4_output(result)
 
 def run_step5(data):
-    from code import step5
+    from CCCgistemp.code import step5
     # Step 5 takes a land mask as optional input, this is all handled in
     # the step5_input() function.
     data = gio.step5_input(data)
