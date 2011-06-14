@@ -211,14 +211,6 @@ def main(argv=None):
 
     step_list = options.steps
     try:
-        # FIXME: The code bellow is commented so run can create a "input" dir 
-        # from where it is called.
-        #rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        #if os.getcwd() != rootdir:
-            #raise Fatal("The GISTEMP procedure must be run from the root "
-                        #"directory of the project.\nPlease change directory "
-                        #"to %s and try again." % rootdir)
-
         # Carry out preflight checks and fetch missing files.
         from CCCgistemp.tool import preflight
         preflight.checkit(sys.stderr)
