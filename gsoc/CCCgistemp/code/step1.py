@@ -36,6 +36,8 @@ from GISTEMP STEP1/input_files/:
 step1_adjust
 Ts.strange.RSU.list.IN
 
+FF: if the user do not provide those, a deafult config/ will be created.
+
 Also requires the existence of writeable work/ and log/ directories.
 """
 
@@ -51,6 +53,8 @@ import series
 
 comb_log = open('log/comb.log','w')
 pieces_log = open('log/pieces.log','w')
+
+read_config.generate_deafults()
 
 def comb_records(stream):
     """Combine records for the same station (the same id11) where
@@ -374,7 +378,7 @@ def get_longest_overlap(target, begin, records):
     (positive when *record* is higher); *overlap* is the number of years
     in the overlap.  Even when there is no overlap _some_ record is
     returned and in that case *diff* is None and *overlap* is 0.
-    
+
     Like other functions, assumes (and asserts) that *begin* is
     the first year for all the records.
     """
