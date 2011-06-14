@@ -31,14 +31,9 @@ Topic :: Software Development :: Libraries :: Python Modules
 
 setup(name = 'ccc-gistemp',
       version = '0.6.1',
-      packages = ['code','tool'],
+      packages = ['CCCgistemp','CCCgistemp.code','CCCgistemp.tool'],
       license = 'LICENSE.txt',
-      description = """
-ccc-gistemp is a reimplementation of GISTEMP in Python for clarity. GISTEMP is
-a reconstruction of the global historical temperature record from land and sea
-surface temperature records. It produces a familiar graph of historical
-temperatures
-      """,
+      description = """ccc-gistemp is a reimplementation of GISTEMP in Python""",
       long_description = open('readme.txt').read(), # change to capitals
       author = 'Nick Barnes, David Jones',
       author_email = 'ccc-gistemp@climatecode.org',
@@ -49,4 +44,5 @@ temperatures
       platforms = 'any',
       cmdclass = {'build_py': build_py},
       keywords = ['science', 'climate', 'GIS', 'temperature'],
+      scripts=['CCCgistemp/tool/ccc-gistemp.py'],
      )
