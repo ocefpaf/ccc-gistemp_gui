@@ -24,7 +24,7 @@ A typo correction in v2.inv, matching the one in STEP1:  40371964000 is called W
 
 Directory renames for intermediate files.
 
-text_to_binary.f has a check for special station IDs in Antartica,
+text_to_binary.f has a check for special station IDs in Antarctica,
 which Reto explains thusly:
 
     The modification of text_to_binary.f has nothing to do with the

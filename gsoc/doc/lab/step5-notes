@@ -270,7 +270,7 @@ In detail:
 line 97 to 106: gather metadata from input file.
 
 line 129 to 177: for each belt:
-  Combine the records the the regions in that belt (by reading them from
+  Combine the records the regions in that belt (by reading them from
   the BX file into AR and WTR), sorting them to combine longer regions
   first.
   line 160 to 176: the record for the belt is biased to make it zero on
@@ -302,7 +302,7 @@ JZG records which zones comprise the alternate global mean computation
 Alternate 1: 9,10,10,11; Alternate 2: 9,4,5,11 (see array literal at
 annzon.f line 50).  These 4 zones are combined with weights 3,2,2,3
 respectively (see WTSP array, line 51).  These weights are proportional
-to the area of the zone (for these particlar zones).
+to the area of the zone (for these particular zones).
 
 line 53 to 83: open file, read header, allocate arrays.
 line 84 to 97: write header.
