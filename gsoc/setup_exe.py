@@ -2,7 +2,7 @@
 # $URL$
 # $Rev$
 #
-# setup.py
+# setup_exe.py
 #
 # Filipe Fernandes, 2011-06-02
 
@@ -25,13 +25,12 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
-data_files = [('config', (os.path.join('config','Ts.strange.RSU.list.IN'),
-                          os.path.join('config','step1_adjust'),))]
+data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt'])]
 
 setup(name = 'ccc-gistemp',
       version = '0.6.1',
-      packages = ['code','tool'],
-      console=[{"script": 'tool/run.py',
+      packages = ['CCCgistemp','CCCgistemp.code','CCCgistemp.tool'],
+      console=[{"script": 'CCCgistemp/tool/ccc-gistemp.py',
       "icon_resources": [(1, "world_globe.ico")]}],
       options = {"py2exe": {
                             "compressed":2,
