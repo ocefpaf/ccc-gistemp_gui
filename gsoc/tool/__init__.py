@@ -1,4 +1,0 @@
-"""The CCC tool package.
-
-
-"""
