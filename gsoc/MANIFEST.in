@@ -1,11 +1,9 @@
 include readme.txt
 include release-notes.txt
-include code/*.py
-include config/step1_adjust
-include config/Ts.strange.RSU.list.IN
 include doc/*.txt
-include doc/lab/*
 include proc/release.txt
-include tool/*.py
-include tool/grid.html
-include tool/grid.js
+include CCCgistemp/__init__.py
+include CCCgistemp/code/*.py
+include CCCgistemp/tool/*.py
+include CCCgistemp/tool/grid.html
+include CCCgistemp/tool/grid.js
