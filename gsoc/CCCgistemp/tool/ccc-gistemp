@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# $URL$
+# $Rev$
+#
+# ccc-gistemp
+#
+# Filipe Fernandes, 2011-06-27
+
+from CCCgistemp.tool import run
+
+#TODO, add options to run vischeck
+
+if __name__ == '__main__':
+    run.main()
