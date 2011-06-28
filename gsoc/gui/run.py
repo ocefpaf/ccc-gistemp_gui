@@ -8,7 +8,7 @@
 
 import wx
 import sys
-import subprocess
+from CCCgistemp.tool import run
 
 class InsertFrame(wx.Frame):
 
@@ -25,7 +25,8 @@ class InsertFrame(wx.Frame):
         print "running ccc-gistemp.py" # need to be able to import and then run!
                                        # the current way requires a separated
                                        # CCCgistemp installation.
-        subprocess.check_call('ccc-gistemp.py')
+        run.main()
+        self.Destroy()
 
     def OnCloseWindow(self, event):
         print "Done!"
