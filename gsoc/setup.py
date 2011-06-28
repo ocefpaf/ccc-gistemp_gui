@@ -15,7 +15,7 @@ try: # Python 3
 except ImportError: # Python 2
   from distutils.command.build_py import build_py
 
-mainscript = 'CCCgistemp/tool/ccc-gistemp.py'
+mainscript = 'CCCgistemp/tool/ccc-gistemp'
 data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt'])]
 
 classifiers = """\
