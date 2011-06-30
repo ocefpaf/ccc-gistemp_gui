@@ -15,6 +15,7 @@ try: # Python 3
 except ImportError: # Python 2
   from distutils.command.build_py import build_py
 
+gui = 'gui/run.py'
 mainscript = 'CCCgistemp/tool/ccc-gistemp'
 data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt'])]
 
@@ -41,6 +42,7 @@ if sys.platform == 'darwin':
 elif sys.platform == 'win32':
     import py2exe
     extra_options = dict(
+        windows=["script": gui],
         console=[{"script": mainscript,
         "icon_resources": [(1, "ccf.ico")]}],
         options = {"py2exe": {
@@ -51,7 +53,8 @@ elif sys.platform == 'win32':
             "xref":False,
             "skip_archive":False,
             "ascii": False,
-            "custom_boot_script":''
+            "custom_boot_script":'',
+            "dll_excludes": ["MSVCP90.dll"]
             }},
         )
 else:
