@@ -15,8 +15,6 @@ Options:
                   If this option is omitted, run all steps in order.
 """
 
-# http://www.python.org/doc/2.4.4/lib/module-getopt.html
-import getopt
 # http://www.python.org/doc/2.4.4/lib/module-os.html
 import os
 # http://docs.python.org/release/2.4.4/lib/module-re.html
