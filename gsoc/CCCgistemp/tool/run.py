@@ -29,20 +29,11 @@ from CCCgistemp.tool import gio
 class Fatal(Exception):
     pass
 
-# :todo: remove me
-# Record the original standard output so we can log to it; in steps 2 and 5
-# we'll be changing the value of sys.stdout before calling other modules that
-# use "print" to generate their output.
-logfile = sys.stdout
-
-def log(msg):
-    print >>logfile, msg
-
 def mkdir(path):
     """mkdir(PATH): create the directory PATH, and all intermediate-level
     directories needed to contain it, unless it already exists."""
     if not os.path.isdir(path):
-        log("... creating directory %s" % path)
+        print("... creating directory %s" % path)
         os.makedirs(path)
 
 # Each of the run_stepN functions below takes a data object, its input,
@@ -107,13 +98,13 @@ def vischeck(data):
     # Suck data through pipeline.
     for _ in data:
         pass
-    log("... running vischeck")
+    print("... running vischeck")
     from CCCgistemp.tool import vischeck
     vischeck.chartit(
       [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
       out = open(os.path.join('result', 'google-chart.url'), 'w'))
 
-    log("See result/google-chart.url")
+    print("See result/google-chart.url")
     yield "vischeck completed"
 
 def parse_steps(steps):
@@ -247,7 +238,7 @@ def main(argv=None):
                 logit = "STEPS %s to %s" % (step_list[0], step_list[-1])
             else:
                 logit = "STEPS %s" % ', '.join(step_list)
-        log("====> %s  ====" % logit)
+        print("====> %s  ====" % logit)
         data = None
         for step in step_list:
             data = step_fn[step](data)
@@ -258,8 +249,8 @@ def main(argv=None):
             pass
 
         end_time = time.time()
-        log("====> Timing Summary ====")
-        log("Run took %.1f seconds" % (end_time - start_time))
+        print("====> Timing Summary ====")
+        print("Run took %.1f seconds" % (end_time - start_time))
 
         return 0
     except Fatal, err:
