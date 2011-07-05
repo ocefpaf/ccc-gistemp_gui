@@ -8,11 +8,15 @@
 
 import wx
 import sys
+import os
 from CCCgistemp.tool import run
+
+path = os.path.dirname(__file__)
 
 WIDHT, HEIGHT = 900, 600
 header_w,  header_h = 900, 150
-header_file = 'ccf-header.jpg'
+header_file = os.path.join(path, 'ccf-header.jpg')
+ico = os.path.join(os.path.split(path)[0], 'ccf.ico')
 
 class RedirectText(object):
 
@@ -40,6 +44,11 @@ class Frame(wx.Frame):
                 size=(WIDHT, HEIGHT), pos=wx.DefaultPosition)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
+        # top left icon
+        icon = wx.EmptyIcon()
+        icon.CopyFromBitmap(wx.Bitmap(ico, wx.BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
+
         # panel
         panel = wx.Panel(self, size=(WIDHT, HEIGHT))
         panel.SetBackgroundColour(wx.WHITE)
@@ -47,8 +56,9 @@ class Frame(wx.Frame):
         image = wx.Image(header_file, wx.BITMAP_TYPE_PNG)
         picture.SetBitmap(wx.Bitmap(header_file))
 
-        log = wx.TextCtrl(panel, wx.ID_ANY, size=(WIDHT-110, HEIGHT-header_h), pos=(90, header_h),
-                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+        log = wx.TextCtrl(panel, wx.ID_ANY, size=(WIDHT-110, HEIGHT-header_h),
+                          pos=(90, header_h), style = wx.TE_MULTILINE|
+                          wx.TE_READONLY|wx.HSCROLL)
 
         # redirect text here
         sys.stderr = RedirectText(log)
@@ -57,12 +67,32 @@ class Frame(wx.Frame):
         # buttons
         offset = 30
         run_button = wx.Button(panel, label='Run', pos=(0, header_h+offset))
-        stp0_button = wx.Button(panel, label="Step 0", pos=(0, header_h+ 2*offset))
-        close_button = wx.Button(panel, wx.ID_CLOSE, label="Exit", pos=(0, header_h+3*offset))
+        stp0_button = wx.Button(panel, id=0, label="Step 0", pos=(0, header_h 
+                                                                  + 3*offset))
+        stp1_button = wx.Button(panel, id=1, label="Step 1", pos=(0, header_h 
+                                                                  + 4*offset))
+        stp2_button = wx.Button(panel, id=2, label="Step 2", pos=(0, header_h 
+                                                                  + 5*offset))
+        stp3_button = wx.Button(panel, id=3, label="Step 3", pos=(0, header_h 
+                                                                  + 6*offset))
+        stp4_button = wx.Button(panel, id=4, label="Step 4", pos=(0, header_h 
+                                                                  + 7*offset))
+        stp5_button = wx.Button(panel, id=5, label="Step 5", pos=(0, header_h 
+                                                                  + 8*offset))
+        stp6_button = wx.Button(panel, id=6, label="Step 6", pos=(0, header_h 
+                                                                  + 9*offset))
+        close_button = wx.Button(panel, wx.ID_CLOSE, label="Exit", 
+                                 pos=(0, header_h + 11*offset))
 
         # actions
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
-        stp0_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_step0)
+        stp0_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp1_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp2_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp3_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp4_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp5_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp6_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         close_button.Bind(wx.EVT_BUTTON, self.OnClose)
 
         panel.Layout()
@@ -80,14 +110,11 @@ class Frame(wx.Frame):
         run.main()
         #self.Destroy() TODO: Add some "I'm done" message here...
 
-    def RunCCCgistemp_step0(self, event):
-        print "running ccc-gistemp.py step 0\n"
-        data = run.main(argv=['-s 0'])
-        #self.Destroy() TODO: Add some "I'm done" message here...
-
-    def OnCloseWindow(self, event):
-        print "Done!"
-        self.Destroy()
+    def RunCCCgistemp_steps(self, event):
+        step = event.GetId() #FIXME: dangerous use of id, find a better way...
+        print("running ccc-gistemp.py step %s\n" % step)
+        run.main(argv=['dummy','-s', str(step)])
+        print("\nFinished step %s\n" % step)
 
 def main():
     app = App(redirect=False)
