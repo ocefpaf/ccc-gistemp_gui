@@ -11,12 +11,25 @@ import sys
 import os
 from CCCgistemp.tool import run
 
-path = os.path.dirname(__file__)
-
+# Constants
 WIDHT, HEIGHT = 900, 600
 header_w,  header_h = 900, 150
-header_file = os.path.join(path, 'ccf-header.jpg')
-ico = os.path.join(os.path.split(path)[0], 'ccf.ico')
+header_file = 'ccf-header.jpg'
+frozen = getattr(sys, 'frozen', '')
+
+# Paths
+if not frozen:
+    # not frozen: in regular python interpreter
+    approot = os.path.dirname(__file__)
+elif frozen in ('dll', 'console_exe', 'windows_exe'):
+    # py2exe:
+    approot = os.path.dirname(sys.executable)
+elif frozen in ('macosx_app',):
+    # py2app:
+    approot = os.environ['RESOURCEPATH']
+
+header_file = os.path.join(approot, 'ccf-header.jpg')
+ico = os.path.join(os.path.split(approot)[0], 'ccf.ico')
 
 class RedirectText(object):
 
