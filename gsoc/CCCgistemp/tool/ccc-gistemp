@@ -6,9 +6,13 @@
 #
 # Filipe Fernandes, 2011-06-27
 
+import sys
 from CCCgistemp.tool import run
 
 #TODO, add options to run vischeck
 
 if __name__ == '__main__':
-    run.main()
+    if len(sys.argv) == 1:
+        run.main()
+    else:
+        run.main(argv=sys.argv)
