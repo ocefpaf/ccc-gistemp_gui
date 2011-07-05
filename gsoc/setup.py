@@ -17,7 +17,8 @@ except ImportError: # Python 2
 
 gui = 'gui/run_gui.py'
 mainscript = 'CCCgistemp/tool/ccc-gistemp'
-data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt'])]
+data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt',
+                   'gui/ccf-header.jpg'])]
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -42,9 +43,10 @@ if sys.platform == 'darwin':
 elif sys.platform == 'win32':
     import py2exe
     extra_options = dict(
-        windows=[{"script": gui}],
+        windows=[{"script": gui,
+                  "icon_resources": [(1, "ccf.ico")]}],
         console=[{"script": mainscript,
-        "icon_resources": [(1, "ccf.ico")]}],
+                  "icon_resources": [(1, "ccf.ico")]}],
         options = {"py2exe": {
             "compressed":1,
             "optimize":2,
