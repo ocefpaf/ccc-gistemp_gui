@@ -18,7 +18,7 @@ except ImportError: # Python 2
 gui = 'gui/run_gui.py'
 mainscript = 'CCCgistemp/tool/ccc-gistemp'
 data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt',
-                   'gui/ccf-header.jpg'])]
+                  'gui/ccf.ico', 'gui/ccf-header.jpg'])]
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -44,9 +44,9 @@ elif sys.platform == 'win32':
     import py2exe
     extra_options = dict(
         windows=[{"script": gui,
-                  "icon_resources": [(1, "ccf.ico")]}],
+                  "icon_resources": [(1, "gui/ccf.ico")]}],
         console=[{"script": mainscript,
-                  "icon_resources": [(1, "ccf.ico")]}],
+                  "icon_resources": [(1, "gui/ccf.ico")]}],
         options = {"py2exe": {
             "compressed":1,
             "optimize":2,
@@ -78,5 +78,6 @@ setup(name = 'ccc-gistemp',
       platforms='any',
       cmdclass={'build_py': build_py},
       keywords=['science', 'climate', 'GIS', 'temperature'],
+      data_files=data_files,
       **extra_options
      )
