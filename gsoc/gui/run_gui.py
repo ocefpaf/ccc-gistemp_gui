@@ -29,7 +29,7 @@ elif frozen in ('macosx_app',):
     approot = os.environ['RESOURCEPATH']
 
 header_file = os.path.join(approot, 'ccf-header.jpg')
-ico = os.path.join(os.path.split(approot)[0], 'ccf.ico')
+ico = os.path.join(approot, 'ccf.ico')
 
 class RedirectText(object):
 
