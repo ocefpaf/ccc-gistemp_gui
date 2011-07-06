@@ -11,6 +11,7 @@ import sys
 import os
 import notify # from phatch TODO: url
 from CCCgistemp.tool import run
+from gui.lib import notify
 
 # Constants
 WIDHT, HEIGHT = 900, 600
@@ -47,6 +48,8 @@ if get_setup() == 'source':
 elif frozen in ('dll', 'console_exe', 'windows_exe'):
     # py2exe
     approot = os.path.dirname(sys.executable)
+    #approot = os.path.dirname(
+        #unicode(sys.)xecutable, sys.getfilesystemencoding())
 elif frozen in ('macosx_app',):
     # py2app
     approot = os.environ['RESOURCEPATH']
