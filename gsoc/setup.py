@@ -18,7 +18,7 @@ except ImportError: # Python 2
 gui = 'gui/run_gui.py'
 mainscript = 'CCCgistemp/tool/ccc-gistemp'
 data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt',
-                  'gui/ccf.ico', 'gui/ccf-header.jpg'])]
+                  'gui/ccf.ico', 'gui/ccf-header.png'])]
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -34,13 +34,21 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
-if sys.platform == 'darwin':
+def get_platform():
+    """safer way to determine platform. """
+    if sys.platform.startswith('win'):
+        return 'windows'
+    elif sys.platform.startswith('darwin'):
+        return 'mac'
+    return 'linux'
+
+if get_platform() == 'mac':
     import py2app
     extra_options = dict(
         app=[mainscript],
         options=dict(py2app=dict(argv_emulation=True)),
         )
-elif sys.platform == 'win32':
+elif get_platform() == 'windows':
     import py2exe
     extra_options = dict(
         windows=[{"script": gui,
