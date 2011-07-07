@@ -9,7 +9,6 @@
 import wx
 import sys
 import os
-import notify # from phatch TODO: url
 from CCCgistemp.tool import run
 from gui.lib import notify
 
@@ -17,6 +16,7 @@ from gui.lib import notify
 WIDHT, HEIGHT = 900, 600
 header_w,  header_h = 900, 150
 
+# Packaging stuff
 def get_setup():
     if hasattr(sys, 'frozen'):
         frozen = getattr(sys, 'frozen', '')
@@ -29,7 +29,23 @@ def is_packaged():
     """For linux only"""
     return not sys.argv[0].endswith('.py')
 
-"""
+
+setup = get_setup()
+if setup == 'source':
+    approot = os.path.dirname(__file__) # not frozen
+elif setup in ('dll', 'console_exe', 'windows_exe'):
+    approot = os.path.dirname(sys.executable) # py2exe
+    #approot = os.path.dirname(
+        #unicode(sys.)xecutable, sys.getfilesystemencoding())
+elif setup in ('macosx_app',):
+    approot = os.environ['RESOURCEPATH'] # py2app
+elif get_setup() == 'package':
+    pass # linux
+
+header_file = os.path.join(approot, 'ccf-header.png')
+ico = os.path.join(approot, 'ccf.ico')
+
+""" I'll need this to launch default application
 open with default app
 if hasattr(os, 'startfile'):# windows
     os.startfile(path)
@@ -41,24 +57,7 @@ else:
     subprocess.call([command, path])
 """
 
-# Paths
-if get_setup() == 'source':
-    # not frozen
-    approot = os.path.dirname(__file__)
-elif frozen in ('dll', 'console_exe', 'windows_exe'):
-    # py2exe
-    approot = os.path.dirname(sys.executable)
-    #approot = os.path.dirname(
-        #unicode(sys.)xecutable, sys.getfilesystemencoding())
-elif frozen in ('macosx_app',):
-    # py2app
-    approot = os.environ['RESOURCEPATH']
-elif get_setup() == 'package':
-    pass # linux
-
-header_file = os.path.join(approot, 'ccf-header.png')
-ico = os.path.join(approot, 'ccf.ico')
-
+# classes
 class RedirectText(object):
     """Redirect text to a wxTextCtrl frame."""
 
@@ -74,8 +73,39 @@ class RedirectText(object):
         pass
 
 
+class MySplashScreen(wx.SplashScreen):
+    """
+Create a splash screen widget.
+    """
+    def __init__(self, parent=None):
+        # This is a recipe to a the screen.
+        # Modify the following variables as necessary.
+        aBitmap = wx.Image(name=header_file).ConvertToBitmap()
+        splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
+        splashDuration = 1000 # milliseconds
+        # Call the constructor with the above arguments in exactly the
+        # following order.
+        wx.SplashScreen.__init__(self, aBitmap, splashStyle,
+                                 splashDuration, parent)
+        #self.Bind(wx.EVT_CLOSE, self.OnExit)
+
+        wx.Yield()
+
+    #def OnExit(self, evt):
+        #self.Hide()
+        ## MyFrame is the main frame.
+        #MyFrame = Frame(None, -1, "Hello from wxPython")
+        #app.SetTopWindow(Frame)
+        #MyFrame.Show(True)
+        ## The program will freeze without this line.
+        #evt.Skip()  # Make sure the default handler runs too...
+
 class App(wx.App):
     """Application class."""
+    #def OnInit(self):
+        #MySplash = MySplashScreen()
+        #MySplash.Show()
+        #return True
     pass
 
 
@@ -87,20 +117,36 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         # top left icon
-        icon = wx.EmptyIcon()
-        icon.CopyFromBitmap(wx.Bitmap(ico, wx.BITMAP_TYPE_ANY))
+        icon = wx.Icon(name=ico, type=wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
         # main panel
-        panel = wx.Panel(self, size=(WIDHT, HEIGHT))
-        panel.SetBackgroundColour(wx.WHITE)
-        picture = wx.StaticBitmap(panel)
+        self.panel = wx.Panel(self, size=(WIDHT, HEIGHT))
+        self.panel.SetBackgroundColour(wx.WHITE)
+        picture = wx.StaticBitmap(self.panel)
         image = wx.Image(header_file, wx.BITMAP_TYPE_PNG)
         picture.SetBitmap(wx.Bitmap(header_file))
 
-        log = wx.TextCtrl(panel, wx.ID_ANY, size=(WIDHT-2*90, HEIGHT-header_h),
-                          pos=(90, header_h), style = wx.TE_MULTILINE|
-                          wx.TE_READONLY|wx.HSCROLL)
+        log = wx.TextCtrl(self.panel, wx.ID_ANY,
+                          size=(WIDHT-2*90, HEIGHT-header_h-20),
+                          pos=(90, header_h),
+                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL
+                         )
+
+        # create hyper link for the source code.
+        url='http://code.google.com/p/ccc-gistemp/'
+        link = wx.HyperlinkCtrl(parent=self.panel, id=-1, label='source code',
+                                url=url, pos=(WIDHT-80, HEIGHT-20)
+                               )
+
+        # gauge
+        self.timer = wx.Timer(self, 1)
+        self.count = 0
+        self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
+
+        self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
+                              size=(WIDHT-2*90, 20), pos=(90, HEIGHT-20)
+                             )
 
         # redirect text here
         sys.stderr = RedirectText(log)
@@ -108,28 +154,29 @@ class Frame(wx.Frame):
 
         # buttons
         offset = 30
-        run_button = wx.Button(panel, label='Run', pos=(0, header_h+offset))
-        stp0_button = wx.Button(panel, id=0, label="Step 0",
+        run_button = wx.Button(self.panel, label='Run',
+                               pos=(0, header_h+offset))
+        stp0_button = wx.Button(self.panel, id=0, label="Step 0",
                                 pos=(0, header_h + 3*offset))
-        stp1_button = wx.Button(panel, id=1, label="Step 1",
+        stp1_button = wx.Button(self.panel, id=1, label="Step 1",
                                 pos=(0, header_h + 4*offset))
-        stp2_button = wx.Button(panel, id=2, label="Step 2",
+        stp2_button = wx.Button(self.panel, id=2, label="Step 2",
                                 pos=(0, header_h + 5*offset))
-        stp3_button = wx.Button(panel, id=3, label="Step 3",
+        stp3_button = wx.Button(self.panel, id=3, label="Step 3",
                                 pos=(0, header_h + 6*offset))
-        stp4_button = wx.Button(panel, id=4, label="Step 4",
+        stp4_button = wx.Button(self.panel, id=4, label="Step 4",
                                 pos=(0, header_h + 7*offset))
-        stp5_button = wx.Button(panel, id=5, label="Step 5",
+        stp5_button = wx.Button(self.panel, id=5, label="Step 5",
                                 pos=(0, header_h + 8*offset))
-        stp6_button = wx.Button(panel, id=6, label="Step 6",
+        stp6_button = wx.Button(self.panel, id=6, label="Step 6",
                                 pos=(0, header_h + 9*offset))
-        close_button = wx.Button(panel, wx.ID_CLOSE, label="Exit", 
+        close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
                                  pos=(0, header_h + 11*offset))
-        dir_button = wx.Button(panel, id=-1,
+        dir_button = wx.Button(self.panel, id=-1,
                                label='Project',
                                pos=(WIDHT-88, header_h+offset))
 
-        # buttons actions
+        # button action
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
         stp0_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         stp1_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
@@ -140,10 +187,26 @@ class Frame(wx.Frame):
         stp6_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         close_button.Bind(wx.EVT_BUTTON, self.OnClose)
         dir_button.Bind(wx.EVT_BUTTON, self.onDir)
-        
-        panel.Layout()
-        
+
+        self.panel.Layout()
+
         self.WORK_DIR = False # constant to check for working directory.
+
+    def OnStop(self, event):
+        """gauge stuff"""
+        if self.count == 0 or self.count >= 50 or not self.timer.IsRunning():
+            return
+        self.timer.Stop()
+        self.text.SetLabel("Task Interrupted")
+        wx.Bell()
+
+    def OnTimer(self, event):
+        ""gauge stuff""
+        self.count = self.count +1
+        self.gauge.SetValue(self.count)
+        if self.count == 50:
+            self.timer.Stop()
+            self.text.SetLabel("Task Completed")
 
     def OnClose(self, event):
         """Close confirmation."""
@@ -152,7 +215,7 @@ class Frame(wx.Frame):
         result = dlg.ShowModal()
         dlg.Destroy()
         if result == wx.ID_OK:
-            self.Destroy()
+            wx.CallAfter(self.Destroy())
 
     def showMessageDlg(self, msg, title, style):
         """Dialog messages."""
@@ -160,33 +223,48 @@ class Frame(wx.Frame):
                                caption=title, style=style)
         dlg.ShowModal()
         dlg.Destroy()
- 
+
+    def check_dir(self):
+        """
+        Check if in a working directory.
+        If not create one and change to it.
+        """
+        if not self.WORK_DIR:
+            self.showMessageDlg("You must choose or create a project directory",
+                                "Information", wx.OK|wx.ICON_INFORMATION)
+            self.WORK_DIR = self.proj_dir()
+            return self.WORK_DIR
+        else:
+            return self.WORK_DIR
+
     def RunCCCgistemp(self, event):
         """Full ccc-gistemp run."""
-        if not self.WORK_DIR:
-            self.showMessageDlg("You must choose/create a project directory",
-                                "Information", wx.OK|wx.ICON_INFORMATION)
-            self.proj_dir()
-            self.run()
-        else:
-            self.run()
+        if self.check_dir():
+            notify.send(title='ccc-gistemp',
+                        message='running ccc-gistemp',
+                        icon=ico)
+            if self.count >= 50:
+                return
+            self.timer.Start(100)
+            #process = wx.Process()
+            #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process)
+            #run.main()
+            notify.send(title='ccc-gistemp',
+                        message='Finished ccc-gistemp run',
+                        icon=ico)
 
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
         step = event.GetId() #FIXME: dangerous use of id, find a better way...
-        print("running ccc-gistemp.py step %s\n" % step)
-        run.main(argv=['dummy','-s', str(step)])
-        print("\nFinished step %s\n" % step)
-    
-    def run(self):
-        """call tool/run.py"""
-        notify.send(title='ccc-gistemp',
-                    message='running ccc-gistemp',
-                    icon=ico)
-        #run.main()
-        notify.send(title='ccc-gistemp',
-                    message='Finished ccc-gistemp run',
-                    icon=ico)
+                             #TODO: add a check for each step
+        if self.check_dir():
+            notify.send(title='ccc-gistemp',
+                        message=('running ccc-gistemp step %s' % step),
+                        icon=ico)
+            run.main(argv=['dummy','-s', str(step)])
+            notify.send(title='ccc-gistemp',
+                        message=('Finished ccc-gistemp step %s' % step),
+                        icon=ico)
 
     def proj_dir(self):
         """Create a project directory and change to it."""
@@ -198,13 +276,14 @@ class Frame(wx.Frame):
             self.WORK_DIR = True
         else:
             self.WORK_DIR = False
-        
+
         dlg.Destroy()
         return self.WORK_DIR
 
     def onDir(self, event):
         """ Button to change/create project directory."""
-        self.proj_dir()
+        self.WORK_DIR = self.proj_dir()
+        return self.WORK_DIR
 
 def main():
     app = App(redirect=False)
