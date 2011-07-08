@@ -52,9 +52,9 @@ elif get_platform() == 'windows':
     import py2exe
     extra_options = dict(
         windows=[{"script": gui,
-                  "icon_resources": [(1, "gui/ccf.ico")]}],
+                  "icon_resources": [(1, "gui/resources/ccf.ico")]}],
         console=[{"script": mainscript,
-                  "icon_resources": [(1, "gui/ccf.ico")]}],
+                  "icon_resources": [(1, "gui/resources/ccf.ico")]}],
         options = {"py2exe": {
             "compressed":1,
             "optimize":2,
@@ -64,7 +64,8 @@ elif get_platform() == 'windows':
             "skip_archive":False,
             "ascii": False,
             "custom_boot_script":'',
-            "dll_excludes": ["MSVCP90.dll"]
+            "dll_excludes":["MSVCP90.dll"],
+            "includes":['gui.lib.notify']
             }},
         )
 else:
@@ -74,7 +75,7 @@ else:
 
 setup(name = 'ccc-gistemp',
       version='0.6.1',
-      packages=['CCCgistemp','CCCgistemp.code','CCCgistemp.tool'],
+      packages=['CCCgistemp','CCCgistemp.code','CCCgistemp.tool','gui','gui.lib'],
       license='LICENSE.txt',
       description="""ccc-gistemp is a reimplementation of GISTEMP in Python""",
       long_description=open('readme.txt').read(), # change to capitals
