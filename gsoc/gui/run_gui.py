@@ -12,6 +12,8 @@ import wx
 import sys
 # http://docs.python.org/release/2.4.4/lib/module-os.path.html
 import os
+#TODO
+import webbrowser
 # TODO
 from CCCgistemp.tool import run
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/notify.py
@@ -19,7 +21,7 @@ from CCCgistemp.tool import run
 from gui.lib import notify
 
 # Constants
-WIDHT, HEIGHT = 900, 600
+WIDHT, HEIGHT = 920, 600
 header_w, header_h = 900, 150
 
 # Packaging stuff. NOTE: Maybe this should be moved to lib...
@@ -71,43 +73,56 @@ splash = os.path.join(approot, 'resources/splash.png')
 
 # Frame class
 class Frame(wx.Frame):
-
+    """GUI window"""
     def __init__(self, parent=None, id=-1):
         wx.Frame.__init__(self, parent, id=-1, title='ccc-gistemp',
                           size=(WIDHT, HEIGHT), pos=wx.DefaultPosition)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-        # top left icon
+        # Top left icon.
         icon = wx.Icon(name=ico, type=wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
-        # main panel
+        # Main panel.
         self.panel = wx.Panel(self, size=(WIDHT, HEIGHT))
         self.panel.SetBackgroundColour(wx.WHITE)
-        picture = wx.StaticBitmap(self.panel)
-        image = wx.Image(header_file, wx.BITMAP_TYPE_PNG)
-        picture.SetBitmap(wx.Bitmap(header_file))
 
+        # Header (actually a button to the source code).
+        pic = wx.Image(name=header_file, type=wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        self.btn_source = wx.BitmapButton(parent=self.panel, id=-1, bitmap=pic,
+                                                          pos=(0,0),
+                                                          style=wx.NO_BORDER)
+        self.btn_source.Bind(wx.EVT_BUTTON, self.webSource)
+
+        # Text box.
         log = wx.TextCtrl(self.panel, wx.ID_ANY,
-                          size=(WIDHT-2*90, HEIGHT-header_h-20),
-                          pos=(90, header_h),
-                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL
-                         )
+                          size=(WIDHT-2*90, HEIGHT-header_h-55),
+                          pos=(90, header_h+10),
+                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
 
-        # Create hyper link for the source code.
-        url='http://code.google.com/p/ccc-gistemp/'
-        link = wx.HyperlinkCtrl(parent=self.panel, id=-1, label='source code',
-                                url=url, pos=(WIDHT-80, HEIGHT-20)
-                               )
+
+        # Status bar.
+        #status = self.CreateStatusBar()
+
+        # Menu bar.
+        menubar = wx.MenuBar()
+        first = wx.Menu()
+        second = wx.Menu()
+        first.Append(wx.NewId(), 'Open Project directory...')
+        first.Append(wx.NewId(), 'Create Project directory...')
+        second.Append(wx.NewId(), 'Help')
+        second.Append(wx.NewId(), 'About')
+        menubar.Append(first, 'File')
+        menubar.Append(second, 'Help')
+        self.SetMenuBar(menubar)
 
         # Gauge.
         self.timer = wx.Timer(self, 1)
         self.count = 0
-        self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
+        #self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
 
         self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
-                              size=(WIDHT-2*90, 20), pos=(90, HEIGHT-20)
-                             )
+                              size=(WIDHT-2*90, 20), pos=(90, HEIGHT-45))
 
         # Redirect text here.
         sys.stderr = RedirectText(log)
@@ -153,6 +168,12 @@ class Frame(wx.Frame):
 
         self.WORK_DIR = False # constant to check for working directory.
 
+    # Events:
+    def webSource(self, event):
+        """Open link for the source code."""
+        url='http://code.google.com/p/ccc-gistemp/'
+        webbrowser.open(url)
+
     def OnStop(self, event):
         """Gauge stuff."""
         #FIXME
@@ -179,25 +200,6 @@ class Frame(wx.Frame):
         dlg.Destroy()
         if result == wx.ID_OK:
             wx.CallAfter(self.Destroy())
-
-    def showMessageDlg(self, msg, title, style):
-        """Dialog messages."""
-        dlg = wx.MessageDialog(parent=None, message=msg,
-                               caption=title, style=style)
-        dlg.ShowModal()
-        dlg.Destroy()
-
-    def check_dir(self):
-        """Check if in a working directory.
-        If not create one and change to it.
-        """
-        if not self.WORK_DIR:
-            self.showMessageDlg("You must choose or create a project directory",
-                                "Information", wx.OK|wx.ICON_INFORMATION)
-            self.WORK_DIR = self.proj_dir()
-            return self.WORK_DIR
-        else:
-            return self.WORK_DIR
 
     def RunCCCgistemp(self, event):
         """Full ccc-gistemp run."""
@@ -228,6 +230,33 @@ class Frame(wx.Frame):
                         message=('Finished ccc-gistemp step %s' % step),
                         icon=ico)
 
+
+    def onDir(self, event):
+        """ Button to change/create project directory."""
+        self.WORK_DIR = self.proj_dir()
+        return self.WORK_DIR
+
+    # Methods:
+    def showMessageDlg(self, msg, title, style):
+        """Wrapper for dialog messages."""
+        dlg = wx.MessageDialog(parent=None, message=msg,
+                               caption=title, style=style)
+        answer = dlg.ShowModal()
+        dlg.Destroy()
+        return answer
+
+    def check_dir(self):
+        """Check if in a working directory.
+        If not create one and change to it.
+        """
+        if not self.WORK_DIR:
+            self.showMessageDlg("You must choose or create a project directory",
+                                "Information", wx.OK|wx.ICON_INFORMATION)
+            self.WORK_DIR = self.proj_dir()
+            return self.WORK_DIR
+        else:
+            return self.WORK_DIR
+
     def proj_dir(self):
         """Create a project directory and change to it."""
         dlg = wx.DirDialog(self, "Choose a directory:",
@@ -240,11 +269,6 @@ class Frame(wx.Frame):
             self.WORK_DIR = False
 
         dlg.Destroy()
-        return self.WORK_DIR
-
-    def onDir(self, event):
-        """ Button to change/create project directory."""
-        self.WORK_DIR = self.proj_dir()
         return self.WORK_DIR
 
 # Other classes.
