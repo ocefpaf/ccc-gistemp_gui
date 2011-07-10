@@ -1,0 +1,18 @@
+#!/usr/bin/python
+# $URL$
+# $Rev$
+#
+# ccc-gistemp
+#
+# Filipe Fernandes, 2011-06-27
+
+import sys
+from CCCgistemp.tool import run
+
+#TODO, add options to run vischeck
+
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        sys.exit(run.main())
+    else:
+        sys.exit(run.main(argv=sys.argv))
