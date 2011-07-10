@@ -10,15 +10,15 @@ import sys
 from distutils.core import setup
 from distutils.command.sdist import sdist
 
-try: # Python 3
-  from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError: # Python 2
-  from distutils.command.build_py import build_py
+try:  # Python 3
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:  # Python 2
+    from distutils.command.build_py import build_py
 
 gui = 'gui/run_gui.py'
-mainscript = 'CCCgistemp/tool/ccc-gistemp'
-data_files = [('',['readme.txt', 'LICENSE.txt', 'release-notes.txt',
-                  'gui/ccf.ico', 'gui/ccf-header.png'])]
+mainscript = 'bin/ccc-gistemp'
+data_files = [('', ['readme.txt', 'LICENSE.txt', 'release-notes.txt',
+                  'gui/resources/ccf.ico', 'gui/resources/ccf-header.png'])]
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -33,6 +33,7 @@ Topic :: Scientific/Engineering
 Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
+
 
 def get_platform():
     """safer way to determine platform. """
@@ -55,17 +56,17 @@ elif get_platform() == 'windows':
                   "icon_resources": [(1, "gui/resources/ccf.ico")]}],
         console=[{"script": mainscript,
                   "icon_resources": [(1, "gui/resources/ccf.ico")]}],
-        options = {"py2exe": {
-            "compressed":1,
-            "optimize":2,
-            "bundle_files":2,
-            "dist_dir":'dist',
-            "xref":False,
-            "skip_archive":False,
+        options={"py2exe": {
+            "compressed": 1,
+            "optimize": 2,
+            "bundle_files": 2,
+            "dist_dir": 'dist',
+            "xref": False,
+            "skip_archive": False,
             "ascii": False,
-            "custom_boot_script":'',
-            "dll_excludes":["MSVCP90.dll"],
-            "includes":['gui.lib.notify']
+            "custom_boot_script": '',
+            "dll_excludes": ["MSVCP90.dll"],
+            "includes": ['gui.lib.notify']
             }},
         )
 else:
@@ -73,12 +74,13 @@ else:
         scripts=[mainscript],
         )
 
-setup(name = 'ccc-gistemp',
+setup(name='ccc-gistemp',
       version='0.6.1',
-      packages=['CCCgistemp','CCCgistemp.code','CCCgistemp.tool','gui','gui.lib'],
+      packages=['CCCgistemp', 'CCCgistemp.code', 'CCCgistemp.tool',
+                'gui', 'gui.lib'],
       license='LICENSE.txt',
       description="""ccc-gistemp is a reimplementation of GISTEMP in Python""",
-      long_description=open('readme.txt').read(), # change to capitals
+      long_description=open('readme.txt').read(),  # change to capitals
       author='Nick Barnes, David Jones',
       author_email='ccc-gistemp@climatecode.org',
       url='http://code.google.com/p/ccc-gistemp/',

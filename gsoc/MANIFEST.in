@@ -1,7 +1,10 @@
 include readme.txt
 include release-notes.txt
+include bin/ccc-gistemp
 include gui/*
-include gui/resources/*
+include gui/resources/*.png
+include gui/resources/*.ico
+include gui/lib/*.py
 include gui/lib/*.py
 include doc/*.txt
 include proc/release.txt

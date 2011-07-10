@@ -16,13 +16,14 @@ import os
 import webbrowser
 # TODO
 from CCCgistemp.tool import run
-# http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/notify.py
+# http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
 # TODO: need to add the license
 from gui.lib import notify
 
 # Constants
 WIDHT, HEIGHT = 920, 600
 header_w, header_h = 900, 150
+
 
 # Packaging stuff. NOTE: Maybe this should be moved to lib...
 def get_setup():
@@ -33,9 +34,10 @@ def get_setup():
     if hasattr(sys, 'frozen'):
         frozen = getattr(sys, 'frozen', '')
         return frozen
-    elif is_packaged(): # linux
+    elif is_packaged():  # linux
         return 'packaged'
     return 'source'
+
 
 def is_packaged():
     """Return True if the App is packaged (linux only)."""
@@ -44,15 +46,16 @@ def is_packaged():
 # Get approot directory.
 setup = get_setup()
 if setup == 'source':
-    approot = os.path.dirname(__file__) # not frozen
+    approot = os.path.dirname(__file__)  # not frozen
 elif setup in ('dll', 'console_exe', 'windows_exe'):
-    approot = os.path.dirname(sys.executable) # py2exe
+    approot = os.path.dirname(sys.executable)  # py2exe
     #approot = os.path.dirname(
         #unicode(sys.)xecutable, sys.getfilesystemencoding())
 elif setup in ('macosx_app',):
-    approot = os.environ['RESOURCEPATH'] # py2app
+    approot = os.environ['RESOURCEPATH']  # py2app
 elif get_setup() == 'package':
-    pass # linux
+    #TODO: will rely on the spec file!
+    pass  # linux
 
 """
 # I'll need this to launch default application when opening a file
@@ -71,6 +74,7 @@ header_file = os.path.join(approot, 'resources/ccf-header.png')
 ico = os.path.join(approot, 'resources/ccf.ico')
 splash = os.path.join(approot, 'resources/splash.png')
 
+
 # Frame class
 class Frame(wx.Frame):
     """GUI window"""
@@ -88,18 +92,19 @@ class Frame(wx.Frame):
         self.panel.SetBackgroundColour(wx.WHITE)
 
         # Header (actually a button to the source code).
-        pic = wx.Image(name=header_file, type=wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-        self.btn_source = wx.BitmapButton(parent=self.panel, id=-1, bitmap=pic,
-                                                          pos=(0,0),
-                                                          style=wx.NO_BORDER)
+        pic = wx.Image(name=header_file, type=wx.BITMAP_TYPE_PNG)
+        pic = pic.ConvertToBitmap()
+        self.btn_source = wx.BitmapButton(parent=self.panel, id=-1,
+                                          bitmap=pic,
+                                          pos=(0, 0),
+                                          style=wx.NO_BORDER)
         self.btn_source.Bind(wx.EVT_BUTTON, self.webSource)
 
         # Text box.
         log = wx.TextCtrl(self.panel, wx.ID_ANY,
-                          size=(WIDHT-2*90, HEIGHT-header_h-55),
-                          pos=(90, header_h+10),
-                          style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
-
+                          size=(WIDHT - 2 * 90, HEIGHT - header_h - 55),
+                          pos=(90, header_h + 10),
+                          style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         # Status bar.
         #status = self.CreateStatusBar()
@@ -122,7 +127,7 @@ class Frame(wx.Frame):
         #self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
 
         self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
-                              size=(WIDHT-2*90, 20), pos=(90, HEIGHT-45))
+                              size=(WIDHT - 2 * 90, 20), pos=(90, HEIGHT - 45))
 
         # Redirect text here.
         sys.stderr = RedirectText(log)
@@ -131,26 +136,26 @@ class Frame(wx.Frame):
         # Buttons.
         offset = 30
         run_button = wx.Button(self.panel, label='Run',
-                               pos=(0, header_h+offset))
+                               pos=(0, header_h + offset))
         stp0_button = wx.Button(self.panel, id=0, label="Step 0",
-                                pos=(0, header_h + 3*offset))
+                                pos=(0, header_h + 3 * offset))
         stp1_button = wx.Button(self.panel, id=1, label="Step 1",
-                                pos=(0, header_h + 4*offset))
+                                pos=(0, header_h + 4 * offset))
         stp2_button = wx.Button(self.panel, id=2, label="Step 2",
-                                pos=(0, header_h + 5*offset))
+                                pos=(0, header_h + 5 * offset))
         stp3_button = wx.Button(self.panel, id=3, label="Step 3",
-                                pos=(0, header_h + 6*offset))
+                                pos=(0, header_h + 6 * offset))
         stp4_button = wx.Button(self.panel, id=4, label="Step 4",
-                                pos=(0, header_h + 7*offset))
+                                pos=(0, header_h + 7 * offset))
         stp5_button = wx.Button(self.panel, id=5, label="Step 5",
-                                pos=(0, header_h + 8*offset))
+                                pos=(0, header_h + 8 * offset))
         stp6_button = wx.Button(self.panel, id=6, label="Step 6",
-                                pos=(0, header_h + 9*offset))
+                                pos=(0, header_h + 9 * offset))
         close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
-                                 pos=(0, header_h + 11*offset))
+                                 pos=(0, header_h + 11 * offset))
         dir_button = wx.Button(self.panel, id=-1,
                                label='Project',
-                               pos=(WIDHT-88, header_h+offset))
+                               pos=(WIDHT - 88, header_h + offset))
 
         # Button action.
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
@@ -166,12 +171,12 @@ class Frame(wx.Frame):
 
         self.panel.Layout()
 
-        self.WORK_DIR = False # constant to check for working directory.
+        self.WORK_DIR = False  # constant to check for working directory.
 
     # Events:
     def webSource(self, event):
         """Open link for the source code."""
-        url='http://code.google.com/p/ccc-gistemp/'
+        url = 'http://code.google.com/p/ccc-gistemp/'
         webbrowser.open(url)
 
     def OnStop(self, event):
@@ -186,7 +191,7 @@ class Frame(wx.Frame):
     def OnTimer(self, event):
         """Gauge stuff."""
         #FIXME
-        self.count = self.count +1
+        self.count = self.count + 1
         self.gauge.SetValue(self.count)
         if self.count == 50:
             self.timer.Stop()
@@ -194,8 +199,10 @@ class Frame(wx.Frame):
 
     def OnClose(self, event):
         """Close confirmation."""
-        dlg = wx.MessageDialog(self, "Do you want to close the application?",
-                            "Confirm Exit", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+        dlg = wx.MessageDialog(self,
+                               "Do you want to close the application?",
+                               "Confirm Exit",
+                               wx.OK | wx.CANCEL | wx.ICON_QUESTION)
         result = dlg.ShowModal()
         dlg.Destroy()
         if result == wx.ID_OK:
@@ -219,17 +226,16 @@ class Frame(wx.Frame):
 
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
-        step = event.GetId() #FIXME: dangerous use of id, find a better way...
-                             #TODO: add a check for each step
+        step = event.GetId()  # FIXME: Dangerous use of id.
+                              # TODO: Add a check for each step.
         if self.check_dir():
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
                         icon=ico)
-            run.main(argv=['dummy','-s', str(step)])
+            run.main(argv=['dummy', '-s', str(step)])
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
                         icon=ico)
-
 
     def onDir(self, event):
         """ Button to change/create project directory."""
@@ -250,8 +256,8 @@ class Frame(wx.Frame):
         If not create one and change to it.
         """
         if not self.WORK_DIR:
-            self.showMessageDlg("You must choose or create a project directory",
-                                "Information", wx.OK|wx.ICON_INFORMATION)
+            self.showMessageDlg("Choose or create a project directory",
+                                "Information", wx.OK | wx.ICON_INFORMATION)
             self.WORK_DIR = self.proj_dir()
             return self.WORK_DIR
         else:
@@ -260,7 +266,7 @@ class Frame(wx.Frame):
     def proj_dir(self):
         """Create a project directory and change to it."""
         dlg = wx.DirDialog(self, "Choose a directory:",
-                           style=wx.DD_DEFAULT_STYLE| wx.DD_CHANGE_DIR)
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_CHANGE_DIR)
 
         if dlg.ShowModal() == wx.ID_OK:
             print "project directory:\n\t%s" % dlg.GetPath()
@@ -270,6 +276,7 @@ class Frame(wx.Frame):
 
         dlg.Destroy()
         return self.WORK_DIR
+
 
 # Other classes.
 class RedirectText(object):
@@ -287,6 +294,7 @@ class RedirectText(object):
         wx.Yield()
         pass
 
+
 class MySplashScreen(wx.SplashScreen):
     """Create a splash screen widget.
     """
@@ -295,7 +303,7 @@ class MySplashScreen(wx.SplashScreen):
         bitmap = wx.Bitmap(splash, wx.BITMAP_TYPE_PNG)
         shadow = wx.WHITE
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
-        splashDuration = 1000 # milliseconds
+        splashDuration = 1000  # milliseconds
         wx.SplashScreen.__init__(self, bitmap, splashStyle,
                                  splashDuration, parent)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
@@ -308,6 +316,7 @@ class MySplashScreen(wx.SplashScreen):
         MyFrame.Show(True)
         # The program will freeze without this line.
         event.Skip()
+
 
 # Application class
 class App(wx.App):
