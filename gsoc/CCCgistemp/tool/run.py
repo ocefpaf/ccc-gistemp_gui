@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # $URL$
 # $Rev$
-# 
+#
 # run.py -- run steps of the GISTEMP algorithm
 #
 # Gareth Rees, 2009-12-08
@@ -81,7 +81,7 @@ def run_step4(data):
     # Unlike earlier steps, Step 4 always gets input data, ocean
     # temperatures, from disk; data from earlier stages is land data and
     # is zipped up.
-    data = gio.step4_input(data) 
+    data = gio.step4_input(data)
     result = step4.step4(data)
     return gio.step4_output(result)
 
@@ -100,10 +100,13 @@ def vischeck(data):
         pass
     print("... running vischeck")
     from CCCgistemp.tool import vischeck
-    vischeck.chartit(
-      [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
-      out = open(os.path.join('result', 'google-chart.url'), 'w'))
-
+    try:
+        vischeck.chartit(
+          [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
+          out = open(os.path.join('result', 'google-chart.url'), 'w'))
+    except:  # Catching all. TODO: Check w/ David if ValueError is OK.
+        print "Unable to generate google chart."
+        yield "vischeck not completed"
     print("See result/google-chart.url")
     yield "vischeck completed"
 
@@ -217,7 +220,7 @@ def main(argv=None):
             '4': run_step4,
             '5': run_step5,
         }
-        
+
         # Record start time now, and ending times for each step.
         start_time = time.time()
 

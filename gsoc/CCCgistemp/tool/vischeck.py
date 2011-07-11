@@ -399,7 +399,11 @@ def main(argv=None):
         fs = map(urllib.urlopen, arg)
     else:
         fs = [sys.stdin]
-    chartit(fs, options)
+    try:
+        chartit(fs, options)
+    except:  # Catching all. TODO: Check w/ David if ValueError is OK.
+        print "Unable to generate google chart."
+        pass
     return 0
 
 if __name__ == '__main__':
