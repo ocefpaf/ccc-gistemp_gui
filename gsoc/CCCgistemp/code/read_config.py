@@ -65,8 +65,11 @@ def get_changes_dict():
         dict[id].append(val)
     return dict
 
-def generate_deafults():
-    """Hack to generate GISTEMP default config files."""
+def generate_defaults():
+    """Hack to generate GISTEMP default config files.
+    Create the files only if they do not exists.
+    TODO: Add a warning?
+    """
 
     # step1_adjust: originally (?) info/use (?)
     step1_adjust = """147619010000 147619010002 1976 8 1.0
@@ -157,8 +160,14 @@ def generate_deafults():
 
     directory = 'config'
 
+    housekeeping = {'directory': False,
+                     'step1_adjust': False,
+                     'Ts.strange.RSU.list.IN': False,
+                    }
     if not os.path.exists(directory):
         os.makedirs(directory)
+        housekeeping.update({'directory': True})
+
 
     # here goes step1_adjust
     path = os.path.join(directory, 'step1_adjust')
@@ -166,6 +175,7 @@ def generate_deafults():
         text_file = open(path, 'w')
         text_file.write(step1_adjust)
         text_file.close()
+        housekeeping.update({'step1_adjust': True})
 
     # here goes Ts.strange.RSU.list.IN
     path = os.path.join(directory, 'Ts.strange.RSU.list.IN')
@@ -173,3 +183,6 @@ def generate_deafults():
         text_file = open(path, 'w')
         text_file.write(Ts_strange_RSU_list_IN)
         text_file.close()
+        housekeeping.update({'Ts.strange.RSU.list.IN': True})
+
+    return house_keeping

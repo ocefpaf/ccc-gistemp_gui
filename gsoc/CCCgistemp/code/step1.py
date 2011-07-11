@@ -54,7 +54,7 @@ import series
 comb_log = open('log/comb.log','w')
 pieces_log = open('log/pieces.log','w')
 
-read_config.generate_deafults()
+read_config.generate_defaults()
 
 def comb_records(stream):
     """Combine records for the same station (the same id11) where
