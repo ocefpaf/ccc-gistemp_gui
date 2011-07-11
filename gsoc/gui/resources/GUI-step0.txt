@@ -1,0 +1,10 @@
+Step 0: Assimilates input data from various sources
+(usually GHCN, USHCN, SCAR READER, and a single
+priv. comm. record for Hohenpeissenberg).  Each
+USHCN record is adjusted so that its recent seasonal
+cycle matches the recent seasonal cycle for the
+corresponding GHCN record (not documented in the
+literature).  GHCN data for Hohenpeissenberg is
+replaced with priv. comm. data (not documented in
+the literature). Hansen et al 2010 documents the
+use of SCAR READER data.

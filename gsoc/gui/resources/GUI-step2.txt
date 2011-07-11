@@ -1,0 +1,15 @@
+Step 2: Urban Adjustment. (short records are
+discarded). Stations identified as urban (usually
+using values obtained from satellite measurements
+of nighttime brightness) have their trend adjusted to
+match the trend of a composite record made from nearby
+rural stations. At least 2/3 of the adjusted period
+must have 3 rural stations contributing to the composite
+record.  Periods and stations that do not have sufficient
+support from rural stations are dropped. The composite
+rural record is made from rural stations with 500 km, or
+1000 km if necessary to meet the sufficient stations
+requirement. This step is documented in Hansen et al 1999
+(the basic scheme), Hansen et al 2001 (allowing the break
+point in a two leg fit to vary in time), and Hansen et al 2010
+(the use of satellite nightlights).

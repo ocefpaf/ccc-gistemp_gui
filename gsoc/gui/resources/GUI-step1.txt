@@ -1,0 +1,16 @@
+Step 1: A feature of GHCN (a major data source) is
+that a single station can have multiple overlapping
+records (from different original sources). These are
+reconciled where possible, by offsetting overlapping
+records by their average difference, and combining
+them into one record. Two stations (Lihue and St Helena)
+are adjusted to remove a step change in the record.
+Under the control of a configuration file, various
+stations and periods of station records are discarded
+(as being unfit for subsequent analysis). Hansen et al 1999
+documents the QC procedures that lead to discarding
+station data; it also documents the Lihue and St Helena
+adjustment (also documented in Hansen et al 2010); and
+it documents the method by which multiple records at the
+same location are combined.  Some of the discarded
+stations in the US are documented in Hansen et al 2001.

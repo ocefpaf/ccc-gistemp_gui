@@ -1,0 +1,20 @@
+Step 3: Gridding.  A grid of cells is selected (8000
+equal area cells covering the globe, see note below),
+and for each cell a composite series is computed from
+station records within 1200 km of the cell centre.
+Each contributing record is weighted according to its
+distance from the cell centre, linearly decreasing to
+0 at a distance of 1200 km. This step is documented in
+Hansen and Lebedeff 1987.
+
+A note on gridding
+
+The grid used (in step 3 and subsequently) divides the
+globe into 8000 equal area cells. It is based on the zonal
+scheme outlined in Step 5 above. There are 4 zones per
+hemisphere, and the choice of sines means that the zones
+have areas in the ratio 4:3:2:1. Each zone is divided by
+longitude into a number of boxes proportional to the area
+of the zone: 16, 12, 8, 4. Thus there are 80 boxes, all having
+the same area. Each box is divided into 100 (10 by 10) cells
+each having equal area.

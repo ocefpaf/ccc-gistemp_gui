@@ -1,0 +1,7 @@
+Step 4: Sea Surface Temperatures. Gridded sea surface
+temperatures are read from a file prepared by GISS using
+data from other published sources and possibly revised with
+recent monthly updates. Sea surface temperature data are only
+used if the location is ice free all year, data from locations
+containing sea ice are discarded. This step is documented in
+Hansen et al 2010 (and possibly elsewhere).

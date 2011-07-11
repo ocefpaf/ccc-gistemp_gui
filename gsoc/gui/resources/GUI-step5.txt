@@ -1,0 +1,30 @@
+Step 5: Ocean merging. Ocean (Sea Surface Temperatures) and
+Land (Near Surface Air Temperatures) are "merged". A cell
+that has both ocean and land records selects either the
+ocean or the land record: the land record is discarded unless
+the ocean record is short or the land record has a contributing
+land station within 100 km (in which case the ocean record is
+discarded).  This part is documented in Hansen et al 1996.
+In ccc-gistemp in order to produce three analyses for land-only,
+ocean-only, and combined land--ocean, three maps of cells are
+produced and go forward to the following Zonal and Global Average
+steps: one containing only land data, one containing only ocean data,
+and one containing mixed land and ocean data as described above.
+
+Zonal Averages. Each hemisphere is divided into 4 zones by
+splitting at the latitudes that have sines of 0.4, 0.7, 0.9
+(and 0 and 1); the latitudes of the zone boundaries are
+approximately 23.6, 44.4, and 64.2 degrees. For each zone
+all the cells in that zone are combined into a single record.
+Large regional averages (hemispheres, tropics, northern- and
+southern-extratropics) are computed by combining zones in various
+combinations, each zone weighted according to the zone's area.
+Zonal averaging is documented in Hansen and Lebedeff 1987 and
+Hansen et al 2006 (each of which describes an alternate scheme,
+the latter is what is currently implemented, but relictual code
+exists for the former).
+
+Global Average. A global series is computed by combining northern-
+and southern-hemisphere series, weighted equally.
+
+Annual series are computed from their monthly counterparts.
