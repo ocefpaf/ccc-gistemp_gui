@@ -12,62 +12,35 @@ import wx
 import sys
 # http://docs.python.org/release/2.4.4/lib/module-os.path.html
 import os
-#TODO
+# http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
 import webbrowser
-# TODO
+# Clear Climate Code
 from CCCgistemp.tool import run
+import gui.lib.packaging as pkg
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
-# TODO: need to add the license
-from gui.lib import notify
+from gui.lib import notify  # TODO: need to add the license
 
 # Constants
 WIDHT, HEIGHT = 920, 600
 header_w, header_h = 900, 150
 
 
-# Packaging stuff. NOTE: Maybe this should be moved to lib...
-def get_setup():
-    """
-    Return information if the App is being called from a linux package,
-    frozen (py2exe or py2app), or from source.
-    """
-    if hasattr(sys, 'frozen'):
-        frozen = getattr(sys, 'frozen', '')
-        return frozen
-    elif is_packaged():  # linux
-        return 'packaged'
-    return 'source'
-
-
-def is_packaged():
-    """Return True if the App is packaged (linux only)."""
-    return not sys.argv[0].endswith('.py')
-
 # Get approot directory.
-setup = get_setup()
+setup = pkg.get_setup()
 if setup == 'source':
     approot = os.path.dirname(__file__)  # not frozen
 elif setup in ('dll', 'console_exe', 'windows_exe'):
     approot = os.path.dirname(sys.executable)  # py2exe
+    # TODO: Might be necessary for weird directory names.
     #approot = os.path.dirname(
-        #unicode(sys.)xecutable, sys.getfilesystemencoding())
+        #unicode(sys.executable, sys.getfilesystemencoding()))
 elif setup in ('macosx_app',):
     approot = os.environ['RESOURCEPATH']  # py2app
 elif get_setup() == 'package':
-    #TODO: will rely on the spec file!
     pass  # linux
 
-"""
-# I'll need this to launch default application when opening a file
-if hasattr(os, 'startfile'):# windows
-    os.startfile(path)
-else:
-    if sys.platform.startwith('darwin'): # mac
-        command = 'open'
-    else: # linux
-        command = 'xdg-open'
-    subprocess.call([command, path])
-"""
+# All to be called from relative, local, or full path.
+approot = os.path.join(os.getcwd(), os.path.basename(approot))
 
 # Icons and figures directory
 header_file = os.path.join(approot, 'resources/ccf-header.png')
@@ -113,13 +86,20 @@ class Frame(wx.Frame):
         menubar = wx.MenuBar()
         first = wx.Menu()
         second = wx.Menu()
-        first.Append(wx.NewId(), 'Open Project directory...')
-        first.Append(wx.NewId(), 'Create Project directory...')
+        open_create = first.Append(wx.NewId(), '&Open Project directory...')
+        first.Append(wx.NewId(), '&Create Project directory...')
+        first.AppendSeparator()
+        first.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
         second.Append(wx.NewId(), 'Help')
-        second.Append(wx.NewId(), 'About')
+        second.Append(wx.ID_ABOUT, "&About",
+                                   "More information about this program")
         menubar.Append(first, 'File')
         menubar.Append(second, 'Help')
         self.SetMenuBar(menubar)
+
+        #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
+        wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
+        wx.EVT_MENU(self, open_create.GetId(),  self.onDir)
 
         # Gauge.
         self.timer = wx.Timer(self, 1)
@@ -153,9 +133,6 @@ class Frame(wx.Frame):
                                 pos=(0, header_h + 9 * offset))
         close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
                                  pos=(0, header_h + 11 * offset))
-        dir_button = wx.Button(self.panel, id=-1,
-                               label='Project',
-                               pos=(WIDHT - 88, header_h + offset))
 
         # Button action.
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
@@ -167,7 +144,6 @@ class Frame(wx.Frame):
         stp5_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         stp6_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         close_button.Bind(wx.EVT_BUTTON, self.OnClose)
-        dir_button.Bind(wx.EVT_BUTTON, self.onDir)
 
         self.panel.Layout()
 
@@ -318,7 +294,7 @@ class MySplashScreen(wx.SplashScreen):
         event.Skip()
 
 
-# Application class
+# Application class.
 class App(wx.App):
     """Application class."""
     def OnInit(self):
@@ -326,7 +302,7 @@ class App(wx.App):
         MySplash.Show()
         return True
 
-#NOTE: I do not know why the splash screen does not work when using main()
+# NOTE: I do not know why the splash screen does not work when using main()
 app = App(redirect=False)
 app.MainLoop()
 #def main():
