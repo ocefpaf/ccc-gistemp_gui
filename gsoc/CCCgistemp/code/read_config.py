@@ -185,4 +185,4 @@ def generate_defaults():
         text_file.close()
         housekeeping.update({'Ts.strange.RSU.list.IN': True})
 
-    return house_keeping
+    return housekeeping
