@@ -16,6 +16,7 @@ import os
 import webbrowser
 # Clear Climate Code
 from CCCgistemp.tool import run
+from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
 from gui.lib import notify  # TODO: need to add the license
@@ -39,8 +40,11 @@ elif setup in ('macosx_app',):
 elif get_setup() == 'package':
     pass  # linux
 
-# All to be called from relative, local, or full path.
-approot = os.path.join(os.getcwd(), os.path.basename(approot))
+# Allow to be called from relative , local, or full path.
+if not approot:
+    approot = os.path.join(os.getcwd())
+elif approot == 'gui':
+    approot = os.path.join(os.getcwd(), os.path.basename(approot))
 
 # Icons and figures directory
 header_file = os.path.join(approot, 'resources/ccf-header.png')
@@ -84,22 +88,32 @@ class Frame(wx.Frame):
 
         # Menu bar.
         menubar = wx.MenuBar()
+
         first = wx.Menu()
         second = wx.Menu()
-        open_create = first.Append(wx.NewId(), '&Open Project directory...')
-        first.Append(wx.NewId(), '&Create Project directory...')
+
+        open_proj = first.Append(wx.NewId(), '&Open Project directory...')
+        crea_proj = first.Append(wx.NewId(), '&Create Project directory...')
+
         first.AppendSeparator()
         first.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
+
         second.Append(wx.NewId(), 'Help')
         second.Append(wx.ID_ABOUT, "&About",
                                    "More information about this program")
-        menubar.Append(first, 'File')
-        menubar.Append(second, 'Help')
+
+        menubar.Append(first, '&File')
+        menubar.Append(second, '&Help')
         self.SetMenuBar(menubar)
 
         #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
-        wx.EVT_MENU(self, open_create.GetId(),  self.onDir)
+        wx.EVT_MENU(self, open_proj.GetId(),  self.onDir)
+        # TODO: For now it is the almost the same as open_proj, since a new
+        # project is just a new directory with the config directory. However,
+        # if we ever create a more sophisticated project management scheme this
+        # must be improved.
+        wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir)
 
         # Gauge.
         self.timer = wx.Timer(self, 1)
@@ -239,14 +253,28 @@ class Frame(wx.Frame):
         else:
             return self.WORK_DIR
 
+    def deploy_config(self):
+        """Add config directory if it does not exists.
+        TODO: Open a text editor so the user can modify these.
+        """
+        if self.WORK_DIR:
+            config_hk = generate_defaults()
+            if config_hk['directory']:
+                print("\nCreated config directory.")
+            if config_hk['step1_adjust']:
+                print("\nCreated step1_adjust config file.")
+            if config_hk['Ts.strange.RSU.list.IN']:
+                print("\nCreated Ts.strange.RSU.list.IN config file.")
+
     def proj_dir(self):
         """Create a project directory and change to it."""
-        dlg = wx.DirDialog(self, "Choose a directory:",
+        dlg = wx.DirDialog(self, "Choose/Create project a directory:",
                            style=wx.DD_DEFAULT_STYLE | wx.DD_CHANGE_DIR)
 
         if dlg.ShowModal() == wx.ID_OK:
-            print "project directory:\n\t%s" % dlg.GetPath()
+            print("Created project directory at:\n\t%s" % dlg.GetPath())
             self.WORK_DIR = True
+            self.deploy_config()
         else:
             self.WORK_DIR = False
 
