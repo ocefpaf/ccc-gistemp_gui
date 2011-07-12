@@ -18,20 +18,17 @@ def get_setup():
     frozen (py2exe or py2app), or from source.
     """
     if hasattr(sys, 'frozen'):
-        frozen = getattr(sys, 'frozen', '')
-        return frozen
-    elif is_packaged():  # linux
+        if sys.frozen in ('windows_exe', 'console_exe'):
+            return 'py2exe'
+        elif sys.frozen in ('macosx_app'):
+            return 'py2app'
+    elif not sys.argv[0].endswith('.py'):  # TODO: test on linux
         return 'packaged'
     return 'source'
 
 
-def is_packaged():
-    """Return True if the App is packaged (linux only)."""
-    return not sys.argv[0].endswith('.py')
-
-
 def get_platform():
-    """safer way to determine platform. """
+    """Safe way to determine platform during setup.py."""
     if sys.platform.startswith('win'):
         return 'windows'
     elif sys.platform.startswith('darwin'):
