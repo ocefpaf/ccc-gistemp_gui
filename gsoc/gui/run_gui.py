@@ -14,8 +14,12 @@ import sys
 import os
 # http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
 import webbrowser
+import glob
+import urllib
+
 # Clear Climate Code
 from CCCgistemp.tool import run
+from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
@@ -25,31 +29,35 @@ from gui.lib import notify  # TODO: need to add the license
 WIDHT, HEIGHT = 920, 600
 header_w, header_h = 900, 150
 
-
 # Get approot directory.
 setup = pkg.get_setup()
 if setup == 'source':
     approot = os.path.dirname(__file__)  # not frozen
-elif setup in ('dll', 'console_exe', 'windows_exe'):
-    approot = os.path.dirname(sys.executable)  # py2exe
-    # TODO: Might be necessary for weird directory names.
-    #approot = os.path.dirname(
-        #unicode(sys.executable, sys.getfilesystemencoding()))
-elif setup in ('macosx_app',):
-    approot = os.environ['RESOURCEPATH']  # py2app
-elif get_setup() == 'package':
+    print("source")  # TODO: removeme
+elif setup == 'py2exe':
+    approot = os.path.dirname(unicode(sys.executable,
+                                      sys.getfilesystemencoding( )))
+    print("py2exe")  # TODO: removeme
+elif setup == 'py2app':
+    approot = os.environ['RESOURCEPATH']
+    print("py2app")  # TODO: removeme
+elif setup == 'package':
+    print("packaged")  # TODO: removeme
     pass  # linux
 
-# Allow to be called from relative , local, or full path.
+# Allow to be called from relative, local, or full path.
 if not approot:
     approot = os.path.join(os.getcwd())
 elif approot == 'gui':
     approot = os.path.join(os.getcwd(), os.path.basename(approot))
 
 # Icons and figures directory
-header_file = os.path.join(approot, 'resources/ccf-header.png')
-ico = os.path.join(approot, 'resources/ccf.ico')
-splash = os.path.join(approot, 'resources/splash.png')
+if setup == 'source':
+    approot = os.path.join(approot, 'resources')
+
+header_file = os.path.join(approot, 'ccf-header.png')
+ico = os.path.join(approot, 'ccf.ico')
+splash = os.path.join(approot, 'splash.png')
 
 
 # Frame class
@@ -98,21 +106,27 @@ class Frame(wx.Frame):
         first.AppendSeparator()
         first.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
 
-        second.Append(wx.NewId(), 'Help')
-        second.Append(wx.ID_ABOUT, "&About",
-                                   "More information about this program")
+        help_proj = second.Append(wx.NewId(), 'Help')
+        dwl_info = second.Append(wx.NewId(), '&Download info')
+        about = second.Append(wx.ID_ABOUT,
+                              "&About",
+                              "More information about this program")
 
         menubar.Append(first, '&File')
         menubar.Append(second, '&Help')
+
         self.SetMenuBar(menubar)
 
         #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
         wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
+        wx.EVT_MENU(self, wx.ID_ABOUT,  self.OnAbout)
         wx.EVT_MENU(self, open_proj.GetId(),  self.onDir)
-        # TODO: For now it is the almost the same as open_proj, since a new
+        wx.EVT_MENU(self, dwl_info.GetId(),  self.onDownloadInfo)
+        # TODO: For now it is the same as open_proj, since a new
         # project is just a new directory with the config directory. However,
         # if we ever create a more sophisticated project management scheme this
-        # must be improved.
+        # must be improved. Also, a validated_open_prj() should be created
+        # to check the results of a previuos run.
         wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir)
 
         # Gauge.
@@ -143,7 +157,7 @@ class Frame(wx.Frame):
                                 pos=(0, header_h + 7 * offset))
         stp5_button = wx.Button(self.panel, id=5, label="Step 5",
                                 pos=(0, header_h + 8 * offset))
-        stp6_button = wx.Button(self.panel, id=6, label="Step 6",
+        stp6_button = wx.Button(self.panel, id=6, label="Show result",
                                 pos=(0, header_h + 9 * offset))
         close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
                                  pos=(0, header_h + 11 * offset))
@@ -156,7 +170,7 @@ class Frame(wx.Frame):
         stp3_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         stp4_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
         stp5_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
-        stp6_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp_steps)
+        stp6_button.Bind(wx.EVT_BUTTON, self.OnShow)
         close_button.Bind(wx.EVT_BUTTON, self.OnClose)
 
         self.panel.Layout()
@@ -168,24 +182,6 @@ class Frame(wx.Frame):
         """Open link for the source code."""
         url = 'http://code.google.com/p/ccc-gistemp/'
         webbrowser.open(url)
-
-    def OnStop(self, event):
-        """Gauge stuff."""
-        #FIXME
-        if self.count == 0 or self.count >= 50 or not self.timer.IsRunning():
-            return
-        self.timer.Stop()
-        self.text.SetLabel("Task Interrupted")
-        wx.Bell()
-
-    def OnTimer(self, event):
-        """Gauge stuff."""
-        #FIXME
-        self.count = self.count + 1
-        self.gauge.SetValue(self.count)
-        if self.count == 50:
-            self.timer.Stop()
-            self.text.SetLabel("Task Completed")
 
     def OnClose(self, event):
         """Close confirmation."""
@@ -204,33 +200,71 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ico)
-            if self.count >= 50:
-                return
-            self.timer.Start(100)
             #process = wx.Process()
             #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process)
-            #run.main()
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
                         icon=ico)
 
+    def OnShow(self, event):
+        """"Show google chart url."""
+        if self.check_dir():
+            res_files = glob.glob(os.path.join(self.CURR_DIR, 'result', '*.txt'))
+            res_list = [os.path.basename(l) for l in res_files]
+
+            box = wx.SingleChoiceDialog(parent=None,
+                                        message="List of result",
+                                        caption="Choose a result file",
+                                        choices=res_list)
+            if box.ShowModal() == wx.ID_OK:
+                answer = box.GetStringSelection()
+                idx = res_list.index(answer)
+                answer = res_files[idx]
+            box.Destroy()
+            try:
+                # TODO: Maybe I should revisit vischeck with David...
+                url = asgooglechartURL(map(anom, map(urllib.urlopen,
+                                       [answer])), options={})
+                webbrowser.open(url.strip())
+            except IOError:
+                print("Could not open result/google-chart.url")
+
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
-        step = event.GetId()  # FIXME: Dangerous use of id.
+        step = str(event.GetId())  # FIXME: Dangerous use of id.
                               # TODO: Add a check for each step.
+
+        self.onStepInfo(step)
+
         if self.check_dir():
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
                         icon=ico)
-            run.main(argv=['dummy', '-s', str(step)])
+            process = wx.Process()
+            pid = wx.Execute(run.main(argv=['dummy', '-s', step]),
+                             wx.EXEC_ASYNC, process)
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
                         icon=ico)
 
     def onDir(self, event):
-        """ Button to change/create project directory."""
+        """Button to change/create project directory."""
         self.WORK_DIR = self.proj_dir()
         return self.WORK_DIR
+
+    def onDownloadInfo(self, event):
+        """Show information regarding the downloaded files."""
+        msg = open(os.path.join(approot, 'GUI-help-input-files.txt'))
+        self.showMessageDlg(msg.read(), "Download information",
+                            wx.OK | wx.ICON_INFORMATION)
+        msg.close()
+
+    def OnAbout(self, event):
+        """Show about text."""
+        msg = open(os.path.join(approot, 'GUI-about.txt'))
+        self.showMessageDlg(msg.read(), "About",
+                            wx.OK | wx.ICON_INFORMATION)
+        msg.close()
 
     # Methods:
     def showMessageDlg(self, msg, title, style):
@@ -240,6 +274,13 @@ class Frame(wx.Frame):
         answer = dlg.ShowModal()
         dlg.Destroy()
         return answer
+
+    def onStepInfo(self, step):
+        """Show information regarding the step process."""
+        text = 'GUI-step'+step+'.txt'
+        with open(os.path.join(approot, text)) as msg:
+            self.showMessageDlg(msg.read(), "Step information.",
+                                wx.OK | wx.ICON_INFORMATION)
 
     def check_dir(self):
         """Check if in a working directory.
@@ -268,11 +309,13 @@ class Frame(wx.Frame):
 
     def proj_dir(self):
         """Create a project directory and change to it."""
-        dlg = wx.DirDialog(self, "Choose/Create project a directory:",
-                           style=wx.DD_DEFAULT_STYLE | wx.DD_CHANGE_DIR)
+        dlg = wx.DirDialog(self,
+                           message="Choose/Create project a directory:",
+                           style=wx.DD_NEW_DIR_BUTTON | wx.DD_CHANGE_DIR)
 
         if dlg.ShowModal() == wx.ID_OK:
-            print("Created project directory at:\n\t%s" % dlg.GetPath())
+            self.CURR_DIR = dlg.GetPath()
+            print("Created project directory at:\n\t%s" % self.CURR_DIR)
             self.WORK_DIR = True
             self.deploy_config()
         else:
