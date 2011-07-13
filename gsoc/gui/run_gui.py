@@ -200,8 +200,9 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ico)
-            process = wx.Process()
-            pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process)
+            #process = wx.Process()
+            #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process)
+            run.main()
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
                         icon=ico)
@@ -240,9 +241,10 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
                         icon=ico)
-            process = wx.Process()
-            pid = wx.Execute(run.main(argv=['dummy', '-s', step]),
-                             wx.EXEC_ASYNC, process)
+            #process = wx.Process()
+            #pid = wx.Execute(run.main(argv=['dummy', '-s', step]),
+                             #wx.EXEC_ASYNC, process)
+            run.main(argv=['dummy', '-s', step])
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
                         icon=ico)
