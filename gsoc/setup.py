@@ -6,7 +6,9 @@
 #
 # Filipe Fernandes, 2011-05-29
 
+import os
 import sys
+import glob
 from distutils.core import setup
 from distutils.command.sdist import sdist
 
@@ -17,8 +19,19 @@ except ImportError:  # Python 2
 
 gui = 'gui/run_gui.py'
 mainscript = 'bin/ccc-gistemp'
-data_files = [('', ['readme.txt', 'LICENSE.txt', 'release-notes.txt',
-                  'gui/resources/ccf.ico', 'gui/resources/ccf-header.png'])]
+ico = "gui/resources/ccf.ico"
+
+def get_gui_files(files):
+    lst = []
+    for f in files:
+        lst.extend(glob.glob(os.path.join('gui/resources', f)))
+    return lst
+
+data_files = [('', ['readme.txt', 'LICENSE.txt', 'release-notes.txt'] +
+                     get_gui_files(['*.txt', '*.png', '*.png', '*.ico'])
+              )]
+
+includes = ['gui.lib.notify']
 
 classifiers = """\
 Development Status :: 5 - Production/Stable
@@ -46,16 +59,21 @@ def get_platform():
 if get_platform() == 'mac':
     import py2app
     extra_options = dict(
-        app=[mainscript],
-        options=dict(py2app=dict(argv_emulation=True)),
+         #app=[{"script": mainscript}],
+         app=[{"script": gui}],
+         options={"py2app": {
+             "argv_emulation": True,
+             "iconfile": ico,
+             "includes": includes
+             }}
         )
 elif get_platform() == 'windows':
     import py2exe
     extra_options = dict(
         windows=[{"script": gui,
-                  "icon_resources": [(1, "gui/resources/ccf.ico")]}],
+                  "icon_resources": [(1, ico)]}],
         console=[{"script": mainscript,
-                  "icon_resources": [(1, "gui/resources/ccf.ico")]}],
+                  "icon_resources": [(1, ico)]}],
         options={"py2exe": {
             "compressed": 1,
             "optimize": 2,
@@ -66,7 +84,7 @@ elif get_platform() == 'windows':
             "ascii": False,
             "custom_boot_script": '',
             "dll_excludes": ["MSVCP90.dll"],
-            "includes": ['gui.lib.notify']
+            "includes": includes
             }},
         )
 else:
