@@ -104,7 +104,7 @@ parameters.py).
 
 Issue 80: Not possible to set parameters from the command line.
 
-You can now set parameters without having to edit parameters.py. 
+You can now set parameters without having to edit parameters.py.
 tool/run.py -p 'retain_contiguous_US=False;data_sources=ghcn,scar,hohenpeissenberg'
 
 
@@ -323,7 +323,7 @@ concern.  It reduced clarity and added complexity to the run
 environment ("What are all these files?").
 
 
-Issue 30: Step 2 uses several intermediate files      
+Issue 30: Step 2 uses several intermediate files
 
 Step 2 created several files to pass data between phases within the
 step.  Even after the resolution of issue 25, there were still 5 files
@@ -347,7 +347,7 @@ takes place via Python iterators, which removes the complexity and
 also causes the code to be naturally and transparently pipelined.
 
 
-Issue 32: step 1 includes overly complex object class       
+Issue 32: step 1 includes overly complex object class
 
 step1.py was partly cut-and-paste from Python already in GISTEMP.  It
 included an object class called StationString, which largely existed
@@ -356,7 +356,7 @@ in database files (see issue 29 ).  This has be replaced by a simple
 dictionary of metadata and a list-of-arrays data series.
 
 
-Issue 33: step 1's simple phases clarified         
+Issue 33: step 1's simple phases clarified
 
 Step 1 consists of four phases, comb_records(), comb_pieces(),
 drop_strange() and alter_discont().  The latter two phases are much
@@ -365,7 +365,7 @@ documented.  Progress has also been made on the first two phases, but
 they are still somewhat mysterious.
 
 
-Issue 34: step 2 was opaque and confusing         
+Issue 34: step 2 was opaque and confusing
 
 STEP 2 of the GISTEMP algorithm performs an adjustment to compensate for
 the urban heat island effect.  The code to do this was quite opaque and
@@ -374,13 +374,13 @@ shared arrays, complex control flow, some obscure data dependencies, and
 hardly any comments.
 
 All the STEP 2 code, now consolidated into step2.py, is clarified and
-documented.  Control flow has been greatly simplified in several places. 
+documented.  Control flow has been greatly simplified in several places.
 Almost all variables and functions have been renamed.  Every function has
 accompanying documentation.  There is hardly any global data or shared
 lists or arrays.
 
 
-Issue 31: Result comparison should give much more detail           
+Issue 31: Result comparison should give much more detail
 
 The compare_results script was improved in numerous ways:
 - x-axis labelling was sometimes broken;
@@ -394,9 +394,9 @@ The improved script fixes all of these, and even draws a crude coloured map
 to indicated the distribution of residual standard deviations.
 
 
-Issue 35: No regression test against NASA GISTEMP           
+Issue 35: No regression test against NASA GISTEMP
 
-There was no way to perform a regression test against NASA's GISTEMP. 
+There was no way to perform a regression test against NASA's GISTEMP.
 Happily Dr Reto Ruedy of GISS has provided us with input data and result
 files from a live run of GISTEMP, and we have already developed a good
 script for graphical and statistical comparison of result files (see  issue
@@ -636,4 +636,3 @@ DOCUMENT, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 $URL$
 $Rev$
-
