@@ -340,10 +340,14 @@ def chartsingle(l):
 
 import sys
 
+def anom(f, **k):
+    """Extract anomalies from file."""
+    return annual_anomalies(f, **k)
+
 def chartit(fs, options={}, out=sys.stdout):
     """Convert the list of files *fs* to a Google Chart API url and print it
     on *out*.
-    
+
     For documentation on *options* see `asgooglechartURL`.
     """
 
@@ -353,10 +357,6 @@ def chartit(fs, options={}, out=sys.stdout):
     k = {}
     if 'extract' in options:
         k['extract'] = options['extract']
-
-    def anom(f):
-        """Extract anomalies from file."""
-        return annual_anomalies(f, **k)
 
     url = asgooglechartURL(map(anom, fs), options)
     if 'download' in options:
@@ -394,7 +394,7 @@ def main(argv=None):
             options['extract'] = map(int, v.split(','))
         if o == '--download':
             options['download'] = True
-            
+
     if len(arg):
         fs = map(urllib.urlopen, arg)
     else:
