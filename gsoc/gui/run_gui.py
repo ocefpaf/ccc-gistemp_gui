@@ -14,8 +14,8 @@ import sys
 import os
 # http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
 import webbrowser
-import glob
-import urllib
+import glob   #NOTE (m): http://docs.python.org/release/2.4.4/lib/module-glob.html
+import urllib #NOTE (m): http://docs.python.org/release/2.4.4/lib/module-urllib.html
 
 # Clear Climate Code
 from CCCgistemp.tool import run
@@ -23,7 +23,7 @@ from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
-from gui.lib import notify  # TODO: need to add the license
+from gui.lib import notify  # NOTE (m): Need to add the license somewhere.
 
 # Constants
 WIDHT, HEIGHT = 920, 600
@@ -33,16 +33,16 @@ header_w, header_h = 900, 150
 setup = pkg.get_setup()
 if setup == 'source':
     approot = os.path.dirname(__file__)  # not frozen
-    print("source")  # TODO: removeme
+    print("source")  # NOTE (c): removeme
 elif setup == 'py2exe':
     approot = os.path.dirname(unicode(sys.executable,
                                       sys.getfilesystemencoding( )))
-    print("py2exe")  # TODO: removeme
+    print("py2exe")  # NOTE (c): removeme
 elif setup == 'py2app':
     approot = os.environ['RESOURCEPATH']
-    print("py2app")  # TODO: removeme
+    print("py2app")  # NOTE (c): removeme
 elif setup == 'package':
-    print("packaged")  # TODO: removeme
+    print("packaged")  # NOTE (c): removeme
     pass  # linux
 
 # Allow to be called from relative, local, or full path.
@@ -51,7 +51,7 @@ if not approot:
 elif approot == 'gui':
     approot = os.path.join(os.getcwd(), os.path.basename(approot))
 
-# Icons and figures directory
+# Icons and figures directory.
 if setup == 'source':
     approot = os.path.join(approot, 'resources')
 
@@ -62,7 +62,7 @@ splash = os.path.join(approot, 'splash.png')
 
 # Frame class
 class Frame(wx.Frame):
-    """GUI window"""
+    """Main GUI window."""
     def __init__(self, parent=None, id=-1):
         wx.Frame.__init__(self, parent, id=-1, title='ccc-gistemp',
                           size=(WIDHT, HEIGHT), pos=wx.DefaultPosition)
@@ -76,7 +76,7 @@ class Frame(wx.Frame):
         self.panel = wx.Panel(self, size=(WIDHT, HEIGHT))
         self.panel.SetBackgroundColour(wx.WHITE)
 
-        # Header (actually a button to the source code).
+        # Header (also a button to the source code).
         pic = wx.Image(name=header_file, type=wx.BITMAP_TYPE_PNG)
         pic = pic.ConvertToBitmap()
         self.btn_source = wx.BitmapButton(parent=self.panel, id=-1,
@@ -91,8 +91,8 @@ class Frame(wx.Frame):
                           pos=(90, header_h + 10),
                           style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
-        # Status bar.
-        #status = self.CreateStatusBar()
+        # Status bar. NOTE (c): FIXME statusbar
+        #if 0: status = self.CreateStatusBar()
 
         # Menu bar.
         menubar = wx.MenuBar()
@@ -117,7 +117,7 @@ class Frame(wx.Frame):
 
         self.SetMenuBar(menubar)
 
-        #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
+        #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout) #NOTE (m): remove
         wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
         wx.EVT_MENU(self, wx.ID_ABOUT,  self.OnAbout)
         wx.EVT_MENU(self, open_proj.GetId(),  self.onDir)
@@ -129,8 +129,8 @@ class Frame(wx.Frame):
         # to check the results of a previuos run.
         wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir)
 
-        # Gauge.
-        self.timer = wx.Timer(self, 1)
+        # Gauge. NOTE (c): Not used, fix.
+        if:0 self.timer = wx.Timer(self, 1)
         self.count = 0
         #self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
 
@@ -175,9 +175,9 @@ class Frame(wx.Frame):
 
         self.panel.Layout()
 
-        self.WORK_DIR = False  # constant to check for working directory.
+        self.WORK_DIR = False  # Constant to check for working directory.
 
-    # Events:
+    # GUI events:
     def webSource(self, event):
         """Open link for the source code."""
         url = 'http://code.google.com/p/ccc-gistemp/'
@@ -200,8 +200,8 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ico)
-            #process = wx.Process()
-            #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process)
+            #process = wx.Process() NOTE (c): remove
+            #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process) NOTE (c): remove
             run.main()
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
@@ -241,9 +241,9 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
                         icon=ico)
-            #process = wx.Process()
-            #pid = wx.Execute(run.main(argv=['dummy', '-s', step]),
-                             #wx.EXEC_ASYNC, process)
+            #process = wx.Process() NOTE (c): remove
+            #pid = wx.Execute(run.main(argv=['dummy', '-s', step]), NOTE (c): remove
+                             #wx.EXEC_ASYNC, process) NOTE (c): remove
             run.main(argv=['dummy', '-s', step])
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
@@ -268,7 +268,7 @@ class Frame(wx.Frame):
                             wx.OK | wx.ICON_INFORMATION)
         msg.close()
 
-    # Methods:
+    # Class methods:
     def showMessageDlg(self, msg, title, style):
         """Wrapper for dialog messages."""
         dlg = wx.MessageDialog(parent=None, message=msg,
@@ -375,7 +375,7 @@ class App(wx.App):
         MySplash.Show()
         return True
 
-# NOTE: I do not know why the splash screen does not work when using main()
+# NOTE (c): I do not know why the splash screen does not work when using main()
 app = App(redirect=False)
 app.MainLoop()
 #def main():
