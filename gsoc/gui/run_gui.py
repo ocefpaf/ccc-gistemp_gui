@@ -14,8 +14,10 @@ import sys
 import os
 # http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
 import webbrowser
-import glob   #NOTE (m): http://docs.python.org/release/2.4.4/lib/module-glob.html
-import urllib #NOTE (m): http://docs.python.org/release/2.4.4/lib/module-urllib.html
+# http://docs.python.org/release/2.4.4/lib/module-glob.html
+import glob
+# http://docs.python.org/release/2.4.4/lib/module-urllib.html
+import urllib
 
 # Clear Climate Code
 from CCCgistemp.tool import run
@@ -23,7 +25,14 @@ from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
-from gui.lib import notify  # NOTE (m): Need to add the license somewhere.
+from gui.lib import notify  # NOTE: Need to add the license somewhere.
+
+"""
+Graphical user interface for ccc-gistemp.
+"""
+
+__docformat__ = "restructuredtext"
+
 
 # Constants
 WIDHT, HEIGHT = 920, 600
@@ -33,16 +42,12 @@ header_w, header_h = 900, 150
 setup = pkg.get_setup()
 if setup == 'source':
     approot = os.path.dirname(__file__)  # not frozen
-    print("source")  # NOTE (c): removeme
 elif setup == 'py2exe':
-    approot = os.path.dirname(unicode(sys.executable,
-                                      sys.getfilesystemencoding( )))
-    print("py2exe")  # NOTE (c): removeme
+    approot = os.path.dirname(sys.executable,
+                                      sys.getfilesystemencoding())
 elif setup == 'py2app':
     approot = os.environ['RESOURCEPATH']
-    print("py2app")  # NOTE (c): removeme
 elif setup == 'package':
-    print("packaged")  # NOTE (c): removeme
     pass  # linux
 
 # Allow to be called from relative, local, or full path.
@@ -51,7 +56,7 @@ if not approot:
 elif approot == 'gui':
     approot = os.path.join(os.getcwd(), os.path.basename(approot))
 
-# Icons and figures directory.
+# Resources (icons and figures.)
 if setup == 'source':
     approot = os.path.join(approot, 'resources')
 
@@ -91,8 +96,9 @@ class Frame(wx.Frame):
                           pos=(90, header_h + 10),
                           style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
-        # Status bar. NOTE (c): FIXME statusbar
-        #if 0: status = self.CreateStatusBar()
+        # Status bar.
+        if 0:  # FIXME: The gauge with be displayed here.
+            status = self.CreateStatusBar()
 
         # Menu bar.
         menubar = wx.MenuBar()
@@ -117,7 +123,6 @@ class Frame(wx.Frame):
 
         self.SetMenuBar(menubar)
 
-        #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout) #NOTE (m): remove
         wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
         wx.EVT_MENU(self, wx.ID_ABOUT,  self.OnAbout)
         wx.EVT_MENU(self, open_proj.GetId(),  self.onDir)
@@ -126,15 +131,15 @@ class Frame(wx.Frame):
         # project is just a new directory with the config directory. However,
         # if we ever create a more sophisticated project management scheme this
         # must be improved. Also, a validated_open_prj() should be created
-        # to check the results of a previuos run.
+        # to check the results of a previous run.
         wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir)
 
-        # Gauge. NOTE (c): Not used, fix.
-        if:0 self.timer = wx.Timer(self, 1)
-        self.count = 0
-        #self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
-
-        self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
+        # Gauge. FIXME: Not used.
+        if 0:
+            self.timer = wx.Timer(self, 1)
+            self.count = 0
+            self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
+            self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
                               size=(WIDHT - 2 * 90, 20), pos=(90, HEIGHT - 45))
 
         # Redirect text here.
@@ -200,8 +205,6 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ico)
-            #process = wx.Process() NOTE (c): remove
-            #pid = wx.Execute(run.main(), wx.EXEC_ASYNC, process) NOTE (c): remove
             run.main()
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
@@ -210,7 +213,8 @@ class Frame(wx.Frame):
     def OnShow(self, event):
         """"Show google chart url."""
         if self.check_dir():
-            res_files = glob.glob(os.path.join(self.CURR_DIR, 'result', '*.txt'))
+            res_files = glob.glob(os.path.join(self.CURR_DIR,
+                                               'result', '*.txt'))
             res_list = [os.path.basename(l) for l in res_files]
 
             box = wx.SingleChoiceDialog(parent=None,
@@ -223,7 +227,6 @@ class Frame(wx.Frame):
                 answer = res_files[idx]
             box.Destroy()
             try:
-                # TODO: Maybe I should revisit vischeck with David...
                 url = asgooglechartURL(map(anom, map(urllib.urlopen,
                                        [answer])), options={})
                 webbrowser.open(url.strip())
@@ -233,7 +236,6 @@ class Frame(wx.Frame):
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
         step = str(event.GetId())  # FIXME: Dangerous use of id.
-                              # TODO: Add a check for each step.
 
         self.onStepInfo(step)
 
@@ -241,9 +243,6 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
                         icon=ico)
-            #process = wx.Process() NOTE (c): remove
-            #pid = wx.Execute(run.main(argv=['dummy', '-s', step]), NOTE (c): remove
-                             #wx.EXEC_ASYNC, process) NOTE (c): remove
             run.main(argv=['dummy', '-s', step])
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
@@ -268,7 +267,7 @@ class Frame(wx.Frame):
                             wx.OK | wx.ICON_INFORMATION)
         msg.close()
 
-    # Class methods:
+    # Methods.
     def showMessageDlg(self, msg, title, style):
         """Wrapper for dialog messages."""
         dlg = wx.MessageDialog(parent=None, message=msg,
@@ -279,13 +278,14 @@ class Frame(wx.Frame):
 
     def onStepInfo(self, step):
         """Show information regarding the step process."""
-        text = 'GUI-step'+step+'.txt'
+        text = 'GUI-step' + step + '.txt'
         with open(os.path.join(approot, text)) as msg:
             self.showMessageDlg(msg.read(), "Step information.",
                                 wx.OK | wx.ICON_INFORMATION)
 
     def check_dir(self):
-        """Check if in a working directory.
+        """
+        Check if inside a working directory.
         If not create one and change to it.
         """
         if not self.WORK_DIR:
@@ -298,7 +298,7 @@ class Frame(wx.Frame):
 
     def deploy_config(self):
         """Add config directory if it does not exists.
-        TODO: Open a text editor so the user can modify these.
+        TODO: Open a text editor so the user can modify these files.
         """
         if self.WORK_DIR:
             config_hk = generate_defaults()
@@ -327,7 +327,7 @@ class Frame(wx.Frame):
         return self.WORK_DIR
 
 
-# Other classes.
+# Classes.
 class RedirectText(object):
     """Redirect text to a wxTextCtrl frame."""
 
@@ -339,16 +339,14 @@ class RedirectText(object):
         wx.Yield()
 
     def flush(self):
-        """ Sometimes stdout is called with the flush() method."""
+        # Sometimes stdout is called with the flush() method.
         wx.Yield()
         pass
 
 
 class MySplashScreen(wx.SplashScreen):
-    """Create a splash screen widget.
-    """
+    """Create a splash screen widget."""
     def __init__(self, parent=None):
-        # This is a recipe to a the screen.
         bitmap = wx.Bitmap(splash, wx.BITMAP_TYPE_PNG)
         shadow = wx.WHITE
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
@@ -375,14 +373,16 @@ class App(wx.App):
         MySplash.Show()
         return True
 
-# NOTE (c): I do not know why the splash screen does not work when using main()
+# NOTE: I do not know why the splash screen does not work when using main()
 app = App(redirect=False)
 app.MainLoop()
-#def main():
-    #app = App(redirect=False)
-    #frame = Frame()
-    #frame.Show()
-    #app.MainLoop()
 
-#if __name__ == '__main__':
-    #main()
+if 0:
+    def main():
+        app = App(redirect=False)
+        frame = Frame()
+        frame.Show()
+        app.MainLoop()
+
+    if __name__ == '__main__':
+        main()
