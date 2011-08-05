@@ -36,11 +36,12 @@ def get_platform():
     return 'linux'
 
 # I'll need this to launch default application when opening a file
-#if hasattr(os, 'startfile'):# windows
-    #os.startfile(path)
-#else:
-    #if sys.platform.startwith('darwin'): # mac
-        #command = 'open'
-    #else: # linux
-        #command = 'xdg-open'
-    #subprocess.call([command, path])
+if 0:
+    if hasattr(os, 'startfile'):# windows
+        os.startfile(path)
+    else:
+        if sys.platform.startwith('darwin'): # mac
+            command = 'open'
+        else: # linux
+            command = 'xdg-open'
+        subprocess.call([command, path])
