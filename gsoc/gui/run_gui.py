@@ -6,6 +6,8 @@
 #
 # Filipe Fernandes, 2011-06-20
 
+""" Graphical user interface to run ccc-gistemp and visualize its outputs."""
+
 # http://www.wxpython.org/onlinedocs.php
 import wx
 # http://www.python.org/doc/2.4.4/lib/module-sys.html
@@ -24,45 +26,39 @@ from CCCgistemp.tool import run
 from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
+
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
 from gui.lib import notify  # NOTE: Need to add the license somewhere.
-
-"""
-Graphical user interface for ccc-gistemp.
-"""
 
 __docformat__ = "restructuredtext"
 
 
 # Constants
-WIDHT, HEIGHT = 920, 600
-header_w, header_h = 900, 150
+WIDTH, HEIGHT = 920, 600
+HEADER_W, HEADER_H = 900, 150
 
 # Get approot directory.
-setup = pkg.get_setup()
-if setup == 'source':
-    approot = os.path.dirname(__file__)  # not frozen
-elif setup == 'py2exe':
-    approot = os.path.dirname(sys.executable,
-                                      sys.getfilesystemencoding())
-elif setup == 'py2app':
-    approot = os.environ['RESOURCEPATH']
-elif setup == 'package':
+SETUP = pkg.get_setup()
+if SETUP == 'source':  # not frozen
+    APPROOT = os.path.join(os.getcwd() , os.path.dirname(__file__))
+elif SETUP == 'py2exe':
+    APPROOT = os.path.dirname(sys.executable)
+elif SETUP == 'py2app':
+    APPROOT = os.environ['RESOURCEPATH']
+elif SETUP == 'packaged':
     pass  # linux
 
-# Allow to be called from relative, local, or full path.
-if not approot:
-    approot = os.path.join(os.getcwd())
-elif approot == 'gui':
-    approot = os.path.join(os.getcwd(), os.path.basename(approot))
-
 # Resources (icons and figures.)
-if setup == 'source':
-    approot = os.path.join(approot, 'resources')
+def app_root_path(filename):
+    """Join App root path with the file name."""
+    return os.path.join(APPROOT, filename)
 
-header_file = os.path.join(approot, 'ccf-header.png')
-ico = os.path.join(approot, 'ccf.ico')
-splash = os.path.join(approot, 'splash.png')
+if SETUP == 'source':
+    APPROOT = app_root_path('resources')
+
+HEADER_FILE = app_root_path('ccf-header.png')
+ICO = app_root_path('ccf.ico')
+SPLASH = app_root_path('splash.png')
 
 
 # Frame class
@@ -70,19 +66,19 @@ class Frame(wx.Frame):
     """Main GUI window."""
     def __init__(self, parent=None, id=-1):
         wx.Frame.__init__(self, parent, id=-1, title='ccc-gistemp',
-                          size=(WIDHT, HEIGHT), pos=wx.DefaultPosition)
+                          size=(WIDTH, HEIGHT), pos=wx.DefaultPosition)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         # Top left icon.
-        icon = wx.Icon(name=ico, type=wx.BITMAP_TYPE_ICO)
+        icon = wx.Icon(name=ICO, type=wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
 
         # Main panel.
-        self.panel = wx.Panel(self, size=(WIDHT, HEIGHT))
+        self.panel = wx.Panel(self, size=(WIDTH, HEIGHT))
         self.panel.SetBackgroundColour(wx.WHITE)
 
         # Header (also a button to the source code).
-        pic = wx.Image(name=header_file, type=wx.BITMAP_TYPE_PNG)
+        pic = wx.Image(name=HEADER_FILE, type=wx.BITMAP_TYPE_PNG)
         pic = pic.ConvertToBitmap()
         self.btn_source = wx.BitmapButton(parent=self.panel, id=-1,
                                           bitmap=pic,
@@ -92,8 +88,8 @@ class Frame(wx.Frame):
 
         # Text box.
         log = wx.TextCtrl(self.panel, wx.ID_ANY,
-                          size=(WIDHT - 2 * 90, HEIGHT - header_h - 55),
-                          pos=(90, header_h + 10),
+                          size=(WIDTH - 2 * 90, HEIGHT - HEADER_H - 55),  # NOTE (m): Get rid of these weird hard-coded offset numbers.
+                          pos=(90, HEADER_H + 10),
                           style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         # Status bar.
@@ -103,23 +99,23 @@ class Frame(wx.Frame):
         # Menu bar.
         menubar = wx.MenuBar()
 
-        first = wx.Menu()
-        second = wx.Menu()
+        filemenu = wx.Menu()
+        helpmenu = wx.Menu()
 
-        open_proj = first.Append(wx.NewId(), '&Open Project directory...')
-        crea_proj = first.Append(wx.NewId(), '&Create Project directory...')
+        open_proj = filemenu.Append(wx.NewId(), '&Open Project directory...')
+        crea_proj = filemenu.Append(wx.NewId(), '&Create Project directory...')
 
-        first.AppendSeparator()
-        first.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
+        filemenu.AppendSeparator()
+        filemenu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
 
-        help_proj = second.Append(wx.NewId(), 'Help')
-        dwl_info = second.Append(wx.NewId(), '&Download info')
-        about = second.Append(wx.ID_ABOUT,
+        help_proj = helpmenu.Append(wx.NewId(), 'Help')
+        dwl_info = helpmenu.Append(wx.NewId(), '&Download info')
+        about = helpmenu.Append(wx.ID_ABOUT,
                               "&About",
                               "More information about this program")
 
-        menubar.Append(first, '&File')
-        menubar.Append(second, '&Help')
+        menubar.Append(filemenu, '&File')
+        menubar.Append(helpmenu, '&Help')
 
         self.SetMenuBar(menubar)
 
@@ -132,7 +128,7 @@ class Frame(wx.Frame):
         # if we ever create a more sophisticated project management scheme this
         # must be improved. Also, a validated_open_prj() should be created
         # to check the results of a previous run.
-        wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir)
+        wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir) # NOTE (m): overwrite a previous run without warning.
 
         # Gauge. FIXME: Not used.
         if 0:
@@ -140,7 +136,7 @@ class Frame(wx.Frame):
             self.count = 0
             self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
             self.gauge = wx.Gauge(parent=self.panel, id=-1, range=50,
-                              size=(WIDHT - 2 * 90, 20), pos=(90, HEIGHT - 45))
+                              size=(WIDTH - 2 * 90, 20), pos=(90, HEIGHT - 45)) # NOTE (m): Get rid of these weird hard-coded offset numbers.
 
         # Redirect text here.
         sys.stderr = RedirectText(log)
@@ -149,23 +145,23 @@ class Frame(wx.Frame):
         # Buttons.
         offset = 30
         run_button = wx.Button(self.panel, label='Run',
-                               pos=(0, header_h + offset))
+                               pos=(0, HEADER_H + offset))
         stp0_button = wx.Button(self.panel, id=0, label="Step 0",
-                                pos=(0, header_h + 3 * offset))
+                                pos=(0, HEADER_H + 3 * offset))
         stp1_button = wx.Button(self.panel, id=1, label="Step 1",
-                                pos=(0, header_h + 4 * offset))
+                                pos=(0, HEADER_H + 4 * offset))
         stp2_button = wx.Button(self.panel, id=2, label="Step 2",
-                                pos=(0, header_h + 5 * offset))
+                                pos=(0, HEADER_H + 5 * offset))
         stp3_button = wx.Button(self.panel, id=3, label="Step 3",
-                                pos=(0, header_h + 6 * offset))
+                                pos=(0, HEADER_H + 6 * offset))
         stp4_button = wx.Button(self.panel, id=4, label="Step 4",
-                                pos=(0, header_h + 7 * offset))
+                                pos=(0, HEADER_H + 7 * offset))
         stp5_button = wx.Button(self.panel, id=5, label="Step 5",
-                                pos=(0, header_h + 8 * offset))
+                                pos=(0, HEADER_H + 8 * offset))
         stp6_button = wx.Button(self.panel, id=6, label="Show result",
-                                pos=(0, header_h + 9 * offset))
+                                pos=(0, HEADER_H + 9 * offset))
         close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
-                                 pos=(0, header_h + 11 * offset))
+                                 pos=(0, HEADER_H + 11 * offset))
 
         # Button action.
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
@@ -190,12 +186,12 @@ class Frame(wx.Frame):
 
     def OnClose(self, event):
         """Close confirmation."""
-        dlg = wx.MessageDialog(self,
+        dialog = wx.MessageDialog(self,
                                "Do you want to close the application?",
                                "Confirm Exit",
                                wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-        result = dlg.ShowModal()
-        dlg.Destroy()
+        result = dialog.ShowModal()
+        dialog.Destroy()
         if result == wx.ID_OK:
             wx.CallAfter(self.Destroy())
 
@@ -204,18 +200,18 @@ class Frame(wx.Frame):
         if self.check_dir():
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
-                        icon=ico)
+                        icon=ICO)
             run.main()
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
-                        icon=ico)
+                        icon=ICO)
 
-    def OnShow(self, event):
+    def OnShow(self, event): # NOTE (c): we need an alternative ()way to display graphs.
         """"Show google chart url."""
         if self.check_dir():
             res_files = glob.glob(os.path.join(self.CURR_DIR,
                                                'result', '*.txt'))
-            res_list = [os.path.basename(l) for l in res_files]
+            res_list = [os.path.basename(l) for l in res_files] #NOTE (c): This can be a separated func that gistemp2csv will call as well.
 
             box = wx.SingleChoiceDialog(parent=None,
                                         message="List of result",
@@ -227,59 +223,59 @@ class Frame(wx.Frame):
                 answer = res_files[idx]
             box.Destroy()
             try:
-                url = asgooglechartURL(map(anom, map(urllib.urlopen,
-                                       [answer])), options={})
-                webbrowser.open(url.strip())
+                with open(answer) as f:
+                    url = asgooglechartURL([annual_anomalies(f)])
+                    webbrowser.open(url.strip())
             except IOError:
                 print("Could not open result/google-chart.url")
 
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
-        step = str(event.GetId())  # FIXME: Dangerous use of id.
+        step = str(event.GetId())  # NOTE (m): Dangerous use of id.
 
         self.onStepInfo(step)
 
         if self.check_dir():
             notify.send(title='ccc-gistemp',
                         message=('running ccc-gistemp step %s' % step),
-                        icon=ico)
+                        icon=ICO)
             run.main(argv=['dummy', '-s', step])
             notify.send(title='ccc-gistemp',
                         message=('Finished ccc-gistemp step %s' % step),
-                        icon=ico)
+                        icon=ICO)
 
     def onDir(self, event):
         """Button to change/create project directory."""
         self.WORK_DIR = self.proj_dir()
         return self.WORK_DIR
 
-    def onDownloadInfo(self, event):
+    def onDownloadInfo(self, event):  #NOTE (m): All texts files are not displayed in a nice way with the default box.
         """Show information regarding the downloaded files."""
-        msg = open(os.path.join(approot, 'GUI-help-input-files.txt'))
-        self.showMessageDlg(msg.read(), "Download information",
+        message = open(app_root_path('GUI-help-input-files.txt'))
+        self.showMessageDlg(message.read(), "Download information",
                             wx.OK | wx.ICON_INFORMATION)
-        msg.close()
+        message.close()
 
     def OnAbout(self, event):
         """Show about text."""
-        msg = open(os.path.join(approot, 'GUI-about.txt'))
-        self.showMessageDlg(msg.read(), "About",
+        message = open(app_root_path('GUI-about.txt'))
+        self.showMessageDlg(message.read(), "About",
                             wx.OK | wx.ICON_INFORMATION)
-        msg.close()
+        message.close()
 
     # Methods.
-    def showMessageDlg(self, msg, title, style):
+    def showMessageDlg(self, message, title, style): #NOTE (m): All texts files are not displayed in a nice way with the default box. must change here to fix.
         """Wrapper for dialog messages."""
-        dlg = wx.MessageDialog(parent=None, message=msg,
+        dialog = wx.MessageDialog(parent=None, message=message,
                                caption=title, style=style)
-        answer = dlg.ShowModal()
-        dlg.Destroy()
+        answer = dialog.ShowModal()
+        dialog.Destroy()
         return answer
 
     def onStepInfo(self, step):
         """Show information regarding the step process."""
         text = 'GUI-step' + step + '.txt'
-        with open(os.path.join(approot, text)) as msg:
+        with open(app_root_path(text)) as msg:
             self.showMessageDlg(msg.read(), "Step information.",
                                 wx.OK | wx.ICON_INFORMATION)
 
@@ -298,7 +294,7 @@ class Frame(wx.Frame):
 
     def deploy_config(self):
         """Add config directory if it does not exists.
-        TODO: Open a text editor so the user can modify these files.
+        NOTE (c): Open a text editor so the user can modify these files.
         """
         if self.WORK_DIR:
             config_hk = generate_defaults()
@@ -311,19 +307,19 @@ class Frame(wx.Frame):
 
     def proj_dir(self):
         """Create a project directory and change to it."""
-        dlg = wx.DirDialog(self,
+        dialog = wx.DirDialog(self,
                            message="Choose/Create project a directory:",
                            style=wx.DD_NEW_DIR_BUTTON | wx.DD_CHANGE_DIR)
 
-        if dlg.ShowModal() == wx.ID_OK:
-            self.CURR_DIR = dlg.GetPath()
+        if dialog.ShowModal() == wx.ID_OK:
+            self.CURR_DIR = dialog.GetPath()
             print("Created project directory at:\n\t%s" % self.CURR_DIR)
             self.WORK_DIR = True
             self.deploy_config()
         else:
             self.WORK_DIR = False
 
-        dlg.Destroy()
+        dialog.Destroy()
         return self.WORK_DIR
 
 
@@ -339,7 +335,7 @@ class RedirectText(object):
         wx.Yield()
 
     def flush(self):
-        # Sometimes stdout is called with the flush() method.
+        """Sometimes stdout is called with the flush() method."""
         wx.Yield()
         pass
 
@@ -347,11 +343,11 @@ class RedirectText(object):
 class MySplashScreen(wx.SplashScreen):
     """Create a splash screen widget."""
     def __init__(self, parent=None):
-        bitmap = wx.Bitmap(splash, wx.BITMAP_TYPE_PNG)
+        self.bitmap = wx.Bitmap(SPLASH, wx.BITMAP_TYPE_PNG)
         shadow = wx.WHITE
         splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
         splashDuration = 1000  # milliseconds
-        wx.SplashScreen.__init__(self, bitmap, splashStyle,
+        wx.SplashScreen.__init__(self, self.bitmap, splashStyle,
                                  splashDuration, parent)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
         wx.Yield()
@@ -367,7 +363,7 @@ class MySplashScreen(wx.SplashScreen):
 
 # Application class.
 class App(wx.App):
-    """Application class."""
+    """Create the application class with a splash screen at initialization."""
     def OnInit(self):
         MySplash = MySplashScreen()
         MySplash.Show()
@@ -380,8 +376,6 @@ app.MainLoop()
 if 0:
     def main():
         app = App(redirect=False)
-        frame = Frame()
-        frame.Show()
         app.MainLoop()
 
     if __name__ == '__main__':
