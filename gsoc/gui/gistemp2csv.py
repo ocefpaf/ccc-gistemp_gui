@@ -6,6 +6,8 @@
 #
 # Filipe Fernandes, 2011-08-01
 
+"""Convert ccc-gistemp text files output to comma separated value format."""
+
 # http://docs.python.org/release/2.4.4/lib/module-os.path.html
 import os
 # http://docs.python.org/release/2.4.4/lib/module-re.html
