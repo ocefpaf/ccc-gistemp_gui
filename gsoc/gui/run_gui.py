@@ -27,8 +27,8 @@ from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
 
-# http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/
-from gui.lib import notify  # NOTE: Need to add the license somewhere.
+# http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/notify
+from gui.lib import notify
 
 __docformat__ = "restructuredtext"
 
