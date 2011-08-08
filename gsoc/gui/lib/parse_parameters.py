@@ -58,6 +58,7 @@ class ParseConfig(object):
                              urban_adjustment_full_radius=1000.0,
                              gridding_radius=1200.0,
                              sea_surface_cutoff_temp=-1.77,
+                             gridding_reference_period=(1951, 1980),
                              subbox_reference_period=(1961, 1990),
                              box_reference_period=(1951, 1980),
                              urban_adjustment_proportion_good=2.0 / 3.0
