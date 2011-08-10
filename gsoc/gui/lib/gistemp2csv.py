@@ -40,9 +40,11 @@ def non_zonal(line):
 def gistemp2csv(fin):
     """ Write a comma separated value file from ccc-gistemp text output."""
 
-    basename = os.path.splitext(os.path.basename(fin))[0]
+    path, fname = os.path.split((fin))
+    basename, ext = os.path.splitext(fname)
+    foutname = os.path.join(path, basename + '.csv')
 
-    fout = open(basename + '.csv', 'wb')
+    fout = open(foutname, 'wb')
 
     csv_out = csv.writer(fout, delimiter=',')
 
@@ -81,11 +83,12 @@ def gistemp2csv(fin):
     fout.close()
 
     # Write the header without the commas.
-    with open(basename + '.csv', "r+") as f:
+    with open(foutname, "r+") as f:
         old = f.read()
         f.seek(0)
         f.write(header + '\n' + old)
 
+    return foutname
 
 if __name__ == '__main__':
     import glob
