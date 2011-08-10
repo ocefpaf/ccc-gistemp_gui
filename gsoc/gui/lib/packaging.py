@@ -10,7 +10,8 @@
 import os
 # http://www.python.org/doc/2.4.4/lib/module-sys.html
 import sys
-
+# http://docs.python.org/release/2.4.4/lib/module-subprocess.html
+import subprocess
 
 def get_setup():
     """
@@ -36,12 +37,14 @@ def get_platform():
     return 'linux'
 
 # I'll need this to launch default application when opening a file
-if 0:
-    if hasattr(os, 'startfile'):# windows
-        os.startfile(path)
+def default_prog(filein):
+    """Open the given file with the default program associate to it."""
+    if hasattr(os, 'startfile'):  # windows
+        os.startfile(filein)
     else:
-        if sys.platform.startwith('darwin'): # mac
+        if sys.platform.startswith('darwin'):  # mac
             command = 'open'
-        else: # linux
+        else:  # linux
             command = 'xdg-open'
-        subprocess.call([command, path])
+
+        subprocess.call([command, filein])
