@@ -26,6 +26,7 @@ from CCCgistemp.tool import run
 from CCCgistemp.tool.vischeck import anom, annual_anomalies, asgooglechartURL
 from CCCgistemp.code.read_config import generate_defaults
 import gui.lib.packaging as pkg
+from gui.lib.gistemp2csv import gistemp2csv
 
 # http://bazaar.launchpad.net/~stani/phatch/trunk/view/head:/phatch/lib/notify
 from gui.lib import notify
@@ -78,13 +79,22 @@ class Frame(wx.Frame):
         self.panel.SetBackgroundColour(wx.WHITE)
 
         # Header (also a button to the source code).
+        if 0:
+            pic = wx.Image(name=HEADER_FILE, type=wx.BITMAP_TYPE_PNG)
+            pic = pic.ConvertToBitmap()
+            self.btn_source = wx.BitmapButton(parent=self.panel, id=-1,
+                                            bitmap=pic,
+                                            pos=(0, 0),
+                                            style=wx.NO_BORDER)
+            self.btn_source.Bind(wx.EVT_BUTTON, self.webSource)
+
         pic = wx.Image(name=HEADER_FILE, type=wx.BITMAP_TYPE_PNG)
         pic = pic.ConvertToBitmap()
-        self.btn_source = wx.BitmapButton(parent=self.panel, id=-1,
+        self.btn_source = wx.StaticBitmap(parent=self.panel, id=-1,
                                           bitmap=pic,
                                           pos=(0, 0),
                                           style=wx.NO_BORDER)
-        self.btn_source.Bind(wx.EVT_BUTTON, self.webSource)
+        self.btn_source.Bind(wx.EVT_LEFT_DOWN, self.webSource)
 
         # Text box.
         log = wx.TextCtrl(self.panel, wx.ID_ANY,
@@ -104,6 +114,7 @@ class Frame(wx.Frame):
 
         open_proj = filemenu.Append(wx.NewId(), '&Open Project directory...')
         crea_proj = filemenu.Append(wx.NewId(), '&Create Project directory...')
+        open_csv = filemenu.Append(wx.NewId(), '&Open spreadsheet results...')
 
         filemenu.AppendSeparator()
         filemenu.Append(wx.ID_EXIT, "E&xit", "Terminate the program")
@@ -121,14 +132,15 @@ class Frame(wx.Frame):
 
         wx.EVT_MENU(self, wx.ID_EXIT,  self.OnClose)
         wx.EVT_MENU(self, wx.ID_ABOUT,  self.OnAbout)
-        wx.EVT_MENU(self, open_proj.GetId(),  self.onDir)
-        wx.EVT_MENU(self, dwl_info.GetId(),  self.onDownloadInfo)
+        wx.EVT_MENU(self, open_proj.GetId(),  self.OnDir)
+        wx.EVT_MENU(self, open_csv.GetId(),  self.OnCSV)
+        wx.EVT_MENU(self, dwl_info.GetId(),  self.OnDownloadInfo)
         # TODO: For now it is the same as open_proj, since a new
         # project is just a new directory with the config directory. However,
         # if we ever create a more sophisticated project management scheme this
         # must be improved. Also, a validated_open_prj() should be created
         # to check the results of a previous run.
-        wx.EVT_MENU(self, crea_proj.GetId(),  self.onDir) # NOTE (m): overwrite a previous run without warning.
+        wx.EVT_MENU(self, crea_proj.GetId(),  self.OnDir) # NOTE (m): overwrite a previous run without warning.
 
         # Gauge. FIXME: Not used.
         if 0:
@@ -206,29 +218,6 @@ class Frame(wx.Frame):
                         message='Finished ccc-gistemp run',
                         icon=ICO)
 
-    def OnShow(self, event): # NOTE (c): we need an alternative ()way to display graphs.
-        """"Show google chart url."""
-        if self.check_dir():
-            res_files = glob.glob(os.path.join(self.CURR_DIR,
-                                               'result', '*.txt'))
-            res_list = [os.path.basename(l) for l in res_files] #NOTE (c): This can be a separated func that gistemp2csv will call as well.
-
-            box = wx.SingleChoiceDialog(parent=None,
-                                        message="List of result",
-                                        caption="Choose a result file",
-                                        choices=res_list)
-            if box.ShowModal() == wx.ID_OK:
-                answer = box.GetStringSelection()
-                idx = res_list.index(answer)
-                answer = res_files[idx]
-            box.Destroy()
-            try:
-                with open(answer) as f:
-                    url = asgooglechartURL([annual_anomalies(f)])
-                    webbrowser.open(url.strip())
-            except IOError:
-                print("Could not open result/google-chart.url")
-
     def RunCCCgistemp_steps(self, event):
         """Run steps."""
         step = str(event.GetId())  # NOTE (m): Dangerous use of id.
@@ -244,12 +233,51 @@ class Frame(wx.Frame):
                         message=('Finished ccc-gistemp step %s' % step),
                         icon=ICO)
 
-    def onDir(self, event):
+    def OnDir(self, event):
         """Button to change/create project directory."""
         self.WORK_DIR = self.proj_dir()
         return self.WORK_DIR
 
-    def onDownloadInfo(self, event):  #NOTE (m): All texts files are not displayed in a nice way with the default box.
+    def OnShow(self, event): # NOTE (c): we need an alternative ()way to display graphs.
+        """"Show google chart url."""
+        res_list,  res_files = self.get_result_files()
+        box = wx.SingleChoiceDialog(parent=None,
+                                    message="List of result",
+                                    caption="Choose a result file",
+                                    choices=res_list)
+        if box.ShowModal() == wx.ID_OK:
+            answer = box.GetStringSelection()
+            idx = res_list.index(answer)
+            answer =  res_files[idx]
+        box.Destroy()
+        try:
+            with open(answer) as f:
+                url = asgooglechartURL([annual_anomalies(f)])
+                webbrowser.open(url.strip())
+        except IOError:
+            print("Could not open result/google-chart.url")
+
+    def OnCSV(self, event):
+        """"Show csv files with default spreadsheet program."""
+        res_list,  res_files = self.get_result_files()
+        box = wx.SingleChoiceDialog(parent=None,
+                                    message="List of result",
+                                    caption="Choose a result file",
+                                    choices=res_list)
+        if box.ShowModal() == wx.ID_OK:
+            answer = box.GetStringSelection()
+            idx = res_list.index(answer)
+            answer =  res_files[idx]
+        box.Destroy()
+        try:
+            csv = gistemp2csv(answer)
+            pkg.default_prog(csv)
+        except IOError:
+            print("Could not open %s" % csv)
+
+
+    #FIXME: All texts files are not displayed in a nice way with the default box.
+    def OnDownloadInfo(self, event):
         """Show information regarding the downloaded files."""
         message = open(app_root_path('GUI-help-input-files.txt'))
         self.showMessageDlg(message.read(), "Download information",
@@ -264,7 +292,8 @@ class Frame(wx.Frame):
         message.close()
 
     # Methods.
-    def showMessageDlg(self, message, title, style): #NOTE (m): All texts files are not displayed in a nice way with the default box. must change here to fix.
+    #FIXME: All texts files are not displayed in a nice way with the default box. must change here to fix.
+    def showMessageDlg(self, message, title, style):
         """Wrapper for dialog messages."""
         dialog = wx.MessageDialog(parent=None, message=message,
                                caption=title, style=style)
@@ -280,8 +309,7 @@ class Frame(wx.Frame):
                                 wx.OK | wx.ICON_INFORMATION)
 
     def check_dir(self):
-        """
-        Check if inside a working directory.
+        """ Check if inside a working directory.
         If not create one and change to it.
         """
         if not self.WORK_DIR:
@@ -291,6 +319,13 @@ class Frame(wx.Frame):
             return self.WORK_DIR
         else:
             return self.WORK_DIR
+
+    def get_result_files(self):
+        """Return a list and the paths of the result text files."""
+        if self.check_dir():
+            res_files = glob.glob(os.path.join(self.CURR_DIR, 'result', '*.txt'))
+            res_list = [os.path.basename(l) for l in res_files]
+            return res_list, res_files
 
     def deploy_config(self):
         """Add config directory if it does not exists.
