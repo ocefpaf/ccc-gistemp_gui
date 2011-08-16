@@ -6,6 +6,7 @@
 #
 # Filipe Fernandes, 2011-08-08
 
+# http://docs.python.org/release/2.4.4/lib/module-ConfigParser.html
 import ConfigParser
 
 
