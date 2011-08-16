@@ -7,3 +7,6 @@ GUI TODO list
 - Create grid/maps plots.
 - Show csv in a  tabular form.
 - Add a progressing/gauge bar.
+
+- readme/about
+- help
