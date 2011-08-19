@@ -8,18 +8,20 @@
 
 """ Graphical user interface to run ccc-gistemp and visualize its outputs."""
 
-# http://www.wxpython.org/onlinedocs.php
-import wx
-# http://www.python.org/doc/2.4.4/lib/module-sys.html
-import sys
 # http://docs.python.org/release/2.4.4/lib/module-os.path.html
 import os
-# http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
-import webbrowser
+# http://www.python.org/doc/2.4.4/lib/module-sys.html
+import sys
 # http://docs.python.org/release/2.4.4/lib/module-glob.html
 import glob
 # http://docs.python.org/release/2.4.4/lib/module-urllib.html
 import urllib
+# http://docs.python.org/release/2.4.4/lib/module-webbrowser.html
+import webbrowser
+
+# http://www.wxpython.org/onlinedocs.php
+import wx
+from wxPython.lib.dialogs import wxScrolledMessageDialog
 
 # Clear Climate Code
 from CCCgistemp.tool import run
@@ -276,7 +278,6 @@ class Frame(wx.Frame):
             print("Could not open %s" % csv)
 
 
-    #FIXME: All texts files are not displayed in a nice way with the default box.
     def OnDownloadInfo(self, event):
         """Show information regarding the downloaded files."""
         message = open(app_root_path('GUI-help-input-files.txt'))
@@ -292,11 +293,10 @@ class Frame(wx.Frame):
         message.close()
 
     # Methods.
-    #FIXME: All texts files are not displayed in a nice way with the default box. must change here to fix.
     def showMessageDlg(self, message, title, style):
         """Wrapper for dialog messages."""
-        dialog = wx.MessageDialog(parent=None, message=message,
-                               caption=title, style=style)
+        dialog = wxScrolledMessageDialog(parent=None, msg=message,
+                                caption=title, style=style)
         answer = dialog.ShowModal()
         dialog.Destroy()
         return answer
