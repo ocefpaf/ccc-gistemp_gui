@@ -28,7 +28,7 @@ def get_gui_files(files):
     return lst
 
 data_files = [('', ['readme.txt', 'LICENSE.txt', 'release-notes.txt'] +
-                     get_gui_files(['*.txt', '*.png', '*.png', '*.ico'])
+                     get_gui_files(['*.txt', '*.png', '*.jpg', '*.ico'])
               )]
 
 includes = ['gui.lib.notify']
