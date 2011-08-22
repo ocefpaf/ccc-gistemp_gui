@@ -49,7 +49,9 @@ elif SETUP == 'py2exe':
 elif SETUP == 'py2app':
     APPROOT = os.environ['RESOURCEPATH']
 elif SETUP == 'packaged':
-    pass  # linux
+    APPROOT = "/usr/share"  # linux
+else:
+    print("Failed to get APPROOT.")
 
 # Resources (icons and figures.)
 def app_root_path(filename):
@@ -215,7 +217,7 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ICO)
-            run.main()
+            run.main(['dummy', '-s', '1-5'])
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
                         icon=ICO)
