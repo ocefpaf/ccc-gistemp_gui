@@ -14,5 +14,10 @@ from CCCgistemp.tool import run
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         sys.exit(run.main())
+    elif sys.argv[1] == 'gui':
+        #TODO: Should renamed or add to CCCgistemp namespace.
+        from gui import run_gui
+        if 0:
+            run_gui()  #FIXME: must fix splash screen first.
     else:
         sys.exit(run.main(argv=sys.argv))
