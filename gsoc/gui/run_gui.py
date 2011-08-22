@@ -217,7 +217,7 @@ class Frame(wx.Frame):
             notify.send(title='ccc-gistemp',
                         message='running ccc-gistemp',
                         icon=ICO)
-            run.main(['dummy', '-s', '1-5'])
+            run.main(['dummy', '-s', '0-5'])
             notify.send(title='ccc-gistemp',
                         message='Finished ccc-gistemp run',
                         icon=ICO)
