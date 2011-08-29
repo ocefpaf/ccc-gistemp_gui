@@ -1,7 +1,6 @@
 GUI TODO list
 =============
 
-#. Use Sizer instead of absolute positioning [1] and [2].
 #. Add scheme to load the ini configuration file (must change parameter.py) [3]
 #. Re-visit vischeck.py (or regression.py?) to produce plots comparisons.
 #. Create grid/maps plots.
@@ -9,6 +8,8 @@ GUI TODO list
 #. Add a progressing/gauge bar.
 #. Add an option for GHCV v3/v2
 #. Add an option for land, ocean, or mixed run.
+#. Check for existing proj-dir.
+#. Add ccc-gistemp icon to a better group (Linux package only.)
 
 [1] http://zetcode.com/wxpython/layout/
 [2] http://wiki.wxpython.org/SizerTutorials

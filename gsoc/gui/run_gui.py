@@ -37,8 +37,6 @@ __docformat__ = "restructuredtext"
 
 # -----------------------------------------------------------------------------
 # Constants
-WIDTH, HEIGHT = 920, 600
-HEADER_W, HEADER_H = 900, 150
 
 # Get approot directory.
 SETUP = pkg.get_setup()
@@ -62,7 +60,7 @@ def app_root_path(filename):
 if SETUP == 'source':
     APPROOT = app_root_path('resources')
 
-HEADER_FILE = app_root_path('ccf-header.png')
+HEADER_FILE = app_root_path('ClimateCode_600x100.png')
 ICO = app_root_path('ccf.ico')
 SPLASH = app_root_path('splash.png')
 
@@ -117,8 +115,14 @@ class App(wx.App):
 class Frame(wx.Frame):
     """Main GUI window."""
     def __init__(self, parent=None, id=-1):
-        wx.Frame.__init__(self, parent, id=-1, title='ccc-gistemp',
-                          size=(WIDTH, HEIGHT), pos=wx.DefaultPosition)
+        super(Frame, self).__init__(parent, id=-1, title='ccc-gistemp', pos=wx.DefaultPosition)
+
+        self.InitUI()
+        self.Centre()
+        self.Show()
+
+    def InitUI(self):
+        """Initialize the GUI."""
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         # ---------------------------------------------------------------------
@@ -128,8 +132,10 @@ class Frame(wx.Frame):
 
         # ---------------------------------------------------------------------
         # Main panel.
-        self.panel = wx.Panel(self, size=(WIDTH, HEIGHT))
-        self.panel.SetBackgroundColour(wx.WHITE)
+        panel = wx.Panel(self)
+        panel.SetBackgroundColour(wx.WHITE)
+
+        sizer = wx.GridBagSizer(10, 2)
 
         # ---------------------------------------------------------------------
         # Menu bar.
@@ -173,18 +179,15 @@ class Frame(wx.Frame):
         # Header (also a button to the source code.)
         pic = wx.Image(name=HEADER_FILE, type=wx.BITMAP_TYPE_PNG)
         pic = pic.ConvertToBitmap()
-        btn_source = wx.StaticBitmap(parent=self.panel, id=-1,
+        btn_source = wx.StaticBitmap(parent=panel, id=-1,
                                           bitmap=pic,
-                                          pos=(0, 0),
                                           style=wx.NO_BORDER)
         btn_source.Bind(wx.EVT_LEFT_DOWN, self.webSource)
 
         # ---------------------------------------------------------------------
         # Text box.
         # NOTE (m): Get rid of these weird hard-coded offset numbers.
-        log = wx.TextCtrl(self.panel, wx.ID_ANY,
-                          size=(WIDTH - 2 * 90, HEIGHT - HEADER_H - 55),
-                          pos=(90, HEADER_H + 10),
+        log = wx.TextCtrl(panel, wx.ID_ANY,
                           style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         # Redirect text here.
@@ -193,25 +196,15 @@ class Frame(wx.Frame):
 
         # ---------------------------------------------------------------------
         # Buttons.
-        offset = 30
-        run_button = wx.Button(self.panel, label='Run',
-                               pos=(0, HEADER_H + offset))
-        stp0_button = wx.Button(self.panel, id=0, label="Step 0",
-                                pos=(0, HEADER_H + 3 * offset))
-        stp1_button = wx.Button(self.panel, id=1, label="Step 1",
-                                pos=(0, HEADER_H + 4 * offset))
-        stp2_button = wx.Button(self.panel, id=2, label="Step 2",
-                                pos=(0, HEADER_H + 5 * offset))
-        stp3_button = wx.Button(self.panel, id=3, label="Step 3",
-                                pos=(0, HEADER_H + 6 * offset))
-        stp4_button = wx.Button(self.panel, id=4, label="Step 4",
-                                pos=(0, HEADER_H + 7 * offset))
-        stp5_button = wx.Button(self.panel, id=5, label="Step 5",
-                                pos=(0, HEADER_H + 8 * offset))
-        stp6_button = wx.Button(self.panel, id=6, label="Show result",
-                                pos=(0, HEADER_H + 9 * offset))
-        close_button = wx.Button(self.panel, wx.ID_CLOSE, label="Exit",
-                                 pos=(0, HEADER_H + 11 * offset))
+        run_button = wx.Button(panel, label='Run')
+        stp0_button = wx.Button(panel, id=0, label="Step 0")
+        stp1_button = wx.Button(panel, id=1, label="Step 1")
+        stp2_button = wx.Button(panel, id=2, label="Step 2")
+        stp3_button = wx.Button(panel, id=3, label="Step 3")
+        stp4_button = wx.Button(panel, id=4, label="Step 4")
+        stp5_button = wx.Button(panel, id=5, label="Step 5")
+        stp6_button = wx.Button(panel, id=6, label="Show result")
+        close_button = wx.Button(panel, wx.ID_CLOSE, label="Exit")
 
         # Button action.
         run_button.Bind(wx.EVT_BUTTON, self.RunCCCgistemp)
@@ -224,7 +217,25 @@ class Frame(wx.Frame):
         stp6_button.Bind(wx.EVT_BUTTON, self.OnShow)
         close_button.Bind(wx.EVT_BUTTON, self.OnClose)
 
-        self.panel.Layout()
+        sizer.Add(btn_source, pos=(0, 1), span=(1, 1), flag=wx.ALIGN_TOP|wx.ALIGN_CENTER, border=5)
+
+        sizer.Add(run_button, pos=(1, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp0_button, pos=(2, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp1_button, pos=(3, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp2_button, pos=(4, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp3_button, pos=(5, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp4_button, pos=(6, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp5_button, pos=(7, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(stp6_button, pos=(8, 0), flag=wx.ALIGN_LEFT, border=5)
+        sizer.Add(close_button, pos=(10, 0), flag=wx.ALIGN_LEFT, border=5)
+
+        sizer.Add(log, pos=(1, 1), span=(9, 1), flag=wx.EXPAND|wx.ALL, border=15)
+
+        sizer.AddGrowableRow(1)
+        sizer.AddGrowableCol(1)
+        panel.SetSizerAndFit(sizer)
+        self.SetSizeHints(700, 520)
+        panel.Layout()
 
         self.WORK_DIR = False  # Constant to check for working directory.
 
