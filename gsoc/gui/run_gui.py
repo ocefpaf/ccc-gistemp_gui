@@ -301,19 +301,23 @@ class Frame(wx.Frame):
                                         message="List of result",
                                         caption="Choose a result file",
                                         choices=res_list)
-            if box.ShowModal() == wx.ID_OK:
+            file_select = box.ShowModal()
+            if file_select == wx.ID_OK:
                 answer = box.GetStringSelection()
                 idx = res_list.index(answer)
                 answer = res_files[idx]
                 box.Destroy()
-            try:
-                with open(answer) as f:
-                    url = asgooglechartURL([annual_anomalies(f)])
-                    webbrowser.open(url.strip())
-            except IOError:
-                print("Could not open result/google-chart.url")
+                try:
+                    with open(answer) as f:
+                        url = asgooglechartURL([annual_anomalies(f)])
+                        webbrowser.open(url.strip())
+                except IOError:
+                    print("Could not open result/google-chart.url")
+            elif file_select == wx.ID_CANCEL:
+                box.Destroy()
+                print("Canceled by the user.")
         else:
-            print("Canceled by the user.")
+            print("No project selected.")
 
     def OnCSV(self, event):
         """"Show csv files with default spreadsheet program."""
