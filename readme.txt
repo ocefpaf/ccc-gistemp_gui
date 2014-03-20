@@ -1,4 +1,4 @@
-CLEAR CLIMATE CODE GISTEMP README FOR RELEASE 0.6.1
+CLEAR CLIMATE CODE GISTEMP README FOR RELEASE 0.5.1
 
 Nick Barnes, Climate Code Foundation
 David Jones, Climate Code Foundation
@@ -21,7 +21,7 @@ CONTENTS
 
 1. INTRODUCTION
 
-This is release 0.6.1 of the Clear Climate Code GISTEMP project
+This is release 0.6.0 of the Clear Climate Code GISTEMP project
 (ccc-gistemp).
 
 Clear Climate Code have reimplemented GISTEMP (the GISS surface
@@ -34,8 +34,6 @@ The purpose of version 0.6 is to make ccc-gistemp more useful by:
     USHCN only; ocean only.
   - allowing a land mask to be used in the step where land and ocean
     data are combined.
-  - making use on NumPy array.
-  - adding a setup.py
 
 In addition there are various bug fixes and improvements to clarity.
 
@@ -86,15 +84,16 @@ Unpack ccc-gistemp-0.6.1.tar.gz.
 
 4. INPUT DATA
 
-ccc-gistemp uses input data in the subdirectory input/.  This
-input data includes large files (a few megabytes to a few dozen
-megabytes) of temperature records from GHCN, USHCN, and sea surface
-data, and small files of additional temperature records and station
-tables from GISS.  ccc-gistemp includes code (tool/preflight.py)
-to fetch this data from the originating organisations over the
-internet.  It will not download a file if it is already present in
-the input/ directory, so if you wish to run ccc-gistemp with updated
-input data, you can delete the input/ directory before you start.
+ccc-gistemp uses input data in the subdirectory input/.  This input
+data includes large files (a few megabytes to a few dozen megabytes)
+of temperature records from GHCN, USHCN, and sea surface data, and
+small files of additional temperature records and station tables from
+GISS.  These files are all specified in config/sources, and there is
+code in tool/fetch.py to fetch them from the originating organisations
+over the internet.  It will not download a file if it is already
+present in the input/ directory, so if you wish to run ccc-gistemp
+with updated input data, you can delete the input/ directory before
+you start.
 
 Downloading the input data is a common causes of problems.  Maintaining
 the part of the code that does this (which has nothing to do with the

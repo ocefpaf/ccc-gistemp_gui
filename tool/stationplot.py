@@ -22,10 +22,13 @@ Usage: python stationplot.py [options] station-id
 The options are:
   [-a] [-y]
   [-c config]
+  [--colour blue,black,...]
   [-d v2.mean]
+  [--caption figure1]
   [-o file.svg]
   [--offset 0,+0.2]
   [-t YYYY,YYYY]
+  [--title title]
   [-s 0.01]
 
 Tool to plot the records for a station.  Stations have an 11-digit
@@ -36,6 +39,13 @@ have several "duplicate" records associated with it.
 Specifying an 11-digit identifier will plot all the duplicates
 associated with that station; a 12-digit indentifier will plot only a
 single record.
+
+Colours can be explicitly assigned using the --colour option.  A station
+will be assigned its corresponding colour in the list of comma separated
+colours, if that station identifier is associated with exactly one
+record (in other words, if an 11 digit ID is used and there are several
+associated station records, none of them will be coloured according to
+the --colour option).
 
 Anomalies can be plotted (each datum has the mean for that month
 subtracted from it) by using the -a option.  The -y option will compute
@@ -175,8 +185,8 @@ def curves(series, K):
             continue
         yield list(block)
 
-def plot(arg, inp, out, meta, timewindow=None, mode='temp',
-  offset=None, scale=0.1, axes=None):
+def plot(arg, inp, out, meta, colour=[], timewindow=None, mode='temp',
+  offset=None, scale=0.1, caption=None, title=None, axes=None):
     """Read data from `inp` and create a plot of the stations specified
     in the list `arg`.  Plot is written to `out`.  Metadata (station
     name, location) is taken from the `meta` file (usually v2.inv).
@@ -203,11 +213,16 @@ def plot(arg, inp, out, meta, timewindow=None, mode='temp',
         
     if meta:
         meta = get_meta(datadict, meta)
-        title = []
-        for id11,d in meta.items():
-            title.append('%s %+06.2f%+07.2f  %s' %
-              (id11, d['lat'], d['lon'], d['name']))
-    title = '\n'.join(title)
+        if title is None:
+            title = []
+            for id11,d in meta.items():
+                title.append('%s %+06.2f%+07.2f  %s' %
+                  (id11, d['lat'], d['lon'], d['name']))
+            # Note, the '\n' is an attempt to get SVG to use more than one
+            # "line".  But it doesn't work.  So... :todo: fix that then.
+            title = '\n'.join(title)
+    if title is None:
+        title = ''
 
     # Assign number of data items per year.
     global K # :todo: made not global.
@@ -260,12 +275,11 @@ def plot(arg, inp, out, meta, timewindow=None, mode='temp',
         bottom[axis] = math.floor(axismin[axis]*scale-smidgin)
         top[axis] = math.ceil(axismax[axis]*scale+smidgin)
     del axis
-    print axismin, axismax
-    print bottom, top
     # The plot is sized according to the y axis (on the left), the r
     # axis is subsidiary.
     plotheight = top['y'] - bottom['y']
     legendh = legend_height(datadict)
+    captionh = caption_height(caption)
     lborder = 125
     rborder = 65
 
@@ -273,7 +287,7 @@ def plot(arg, inp, out, meta, timewindow=None, mode='temp',
       xmlns="http://www.w3.org/2000/svg"
       xmlns:xlink="http://www.w3.org/1999/xlink"
       version="1.1">\n""" %
-      (plotwidth+lborder+rborder, plotheight+100+legendh))
+      (plotwidth+lborder+rborder, plotheight+100+legendh+captionh))
 
     # Style
     out.write("""<defs>
@@ -286,9 +300,17 @@ def plot(arg, inp, out, meta, timewindow=None, mode='temp',
     text { fill: black; font-family: Verdana }
 """ % ('display: none', '')[config.debug])
     colours = itertools.chain(colour_list, colour_iter())
-    for id12,colour in zip(sorted(datadict), colours):
+    # Assign colours from --colour argument, if and only if there is
+    # exactly one entry in the dict corresponding to the station id.
+    colourdict = {}
+    for key,c in zip(arg,colour):
+        keys = [k for k in datadict if k.startswith(key)]
+        if len(keys) == 1:
+            colourdict[keys[0]] = c
+    for id12,c in zip(sorted(datadict), colours):
+        c = colourdict.get(id12, c)
         cssidescaped = cssidescape('record' + id12)
-        out.write("    g.%s { stroke: %s }\n" % (cssidescaped, colour))
+        out.write("    g.%s { stroke: %s }\n" % (cssidescaped, c))
     out.write("  </style>\n</defs>\n")
 
     # Push chart down and right to give a bit of a border.
@@ -308,7 +330,12 @@ def plot(arg, inp, out, meta, timewindow=None, mode='temp',
 
       # Colour legend.
       with Tag(out, 'g', attr=dict(id='legend')):
-          render_legend(out, datadict, minyear)
+          ly = render_legend(out, datadict, minyear)
+
+      # Caption, below legend.
+      if caption:
+          with Tag(out, 'g', attr=dict(id='caption')):
+              render_caption(out, ly, caption)
 
       # Start of "axes" group.
       out.write("<g id='axes'>\n")
@@ -415,8 +442,17 @@ def legend_height(datadict):
     else:
         return config.fontsize
 
+def caption_height(caption):
+    """Height of the caption."""
+
+    # :todo: not very general.
+    return 1.5 * config.fontsize
+
 def render_legend(out, datadict, minyear):
-    """Write the SVG for the legend onto the stream *out*."""
+    """Write the SVG for the legend onto the stream *out*.  Return the
+    lowest y coordinate used.
+    """
+
     # Includes range indicators for each series.
     # Start of the top line of text for the legend.
 
@@ -430,6 +466,17 @@ def render_legend(out, datadict, minyear):
               (y, id12))
             out.write("  <g class='record%s'><path d='M%.1f %dl%.1f 0' /></g>\n" %
               (id12, (begin-minyear)*config.xscale, y, length*config.xscale))
+        return y
+
+def render_caption(out, y, caption):
+      """*y* is the y coordinate of the bottom edge of the printed
+      region immediately above the caption (which is normally the
+      legend).
+      """
+      # :todo: Abstract; multi-line; XML escape.
+      out.write("  <text font-size='%.1f' x='0' y='%.1f'>" %
+        (config.fontsize, y+caption_height(caption)))
+      out.write(caption + "</text>\n")
 
 def render_vaxis(out, axis, mode, bottom, top, plotwidth):
     """Either the 'y' (on left) or the 'r' axis (on right)."""
@@ -803,9 +850,9 @@ def main(argv=None):
 
     try:
         infile = 'input/v2.mean'
-        metafile = 'input/v2.inv'
+        metafile = None
         opt,arg = getopt.getopt(argv[1:], 'ac:o:d:m:s:t:y',
-          ['axes=', 'offset='])
+          ['axes=', 'caption=', 'colour=', 'offset=', 'title='])
         if not arg:
             raise Usage('At least one identifier must be supplied.')
         outfile = arg[0] + '.svg'
@@ -813,6 +860,10 @@ def main(argv=None):
         for k,v in opt:
             if k == '--axes':
                 key['axes'] = v
+            if k == '--caption':
+                key['caption'] = v
+            if k == '--colour':
+                key['colour'] = v.split(',')
             if k == '-c':
                 update_config(config, v)
             if k == '--offset':
@@ -827,6 +878,8 @@ def main(argv=None):
                 metafile = v
             if k == '-t':
                 key['timewindow'] = parse_topt(v)
+            if k == '--title':
+                key['title'] = v
             if k == '-y':
                 key['mode'] = 'annual'
             if k == '-s':
@@ -841,7 +894,15 @@ def main(argv=None):
             infile = sys.stdin
         else:
             infile = open(infile)
-        metafile = open(metafile)
+        if metafile is None:
+            # The default is 'input/v2.inv' but we don't complain if we
+            # can't open it.
+            try:
+                metafile = open('input/v2.inv')
+            except IOError:
+                pass
+        else:
+            metafile = open(metafile)
         derive_config(config)
         return plot(arg, inp=infile, out=outfile, meta=metafile, **key)
     except (getopt.GetoptError, Usage), e:

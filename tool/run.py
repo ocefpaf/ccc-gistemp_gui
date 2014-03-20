@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # $URL$
 # $Rev$
-#
+# 
 # run.py -- run steps of the GISTEMP algorithm
 #
 # Gareth Rees, 2009-12-08
@@ -15,6 +15,8 @@ Options:
                   If this option is omitted, run all steps in order.
 """
 
+# http://www.python.org/doc/2.4.4/lib/module-getopt.html
+import getopt
 # http://www.python.org/doc/2.4.4/lib/module-os.html
 import os
 # http://docs.python.org/release/2.4.4/lib/module-re.html
@@ -23,17 +25,26 @@ import re
 import sys
 
 # Clear Climate Code
-from CCCgistemp.tool import extend_path
-from CCCgistemp.tool import gio
+import extend_path
+import gio
 
 class Fatal(Exception):
     pass
+
+# :todo: remove me
+# Record the original standard output so we can log to it; in steps 2 and 5
+# we'll be changing the value of sys.stdout before calling other modules that
+# use "print" to generate their output.
+logfile = sys.stdout
+
+def log(msg):
+    print >>logfile, msg
 
 def mkdir(path):
     """mkdir(PATH): create the directory PATH, and all intermediate-level
     directories needed to contain it, unless it already exists."""
     if not os.path.isdir(path):
-        print("... creating directory %s" % path)
+        log("... creating directory %s" % path)
         os.makedirs(path)
 
 # Each of the run_stepN functions below takes a data object, its input,
@@ -41,28 +52,34 @@ def mkdir(path):
 # are iterators, either produced from the previous step, or an iterator
 # that feeds from a file.
 def run_step0(data):
-    from CCCgistemp.code import step0
+    from code import step0
+    import extension.step0
     if data is None:
         data = gio.step0_input()
-    result = step0.step0(data)
-    return gio.step0_output(result)
+    pre = extension.step0.pre_step0(data)
+    result = step0.step0(pre)
+    post = extension.step0.post_step0(result)
+    return gio.step0_output(post)
 
 def run_step1(data):
-    from CCCgistemp.code import step1
+    from code import step1
+    import extension.step1
     if data is None:
         data = gio.step1_input()
-    result = step1.step1(data)
-    return gio.step1_output(result)
+    pre = extension.step1.pre_step1(data)
+    result = step1.step1(pre)
+    post = extension.step1.post_step1(result)
+    return gio.step1_output(post)
 
 def run_step2(data):
-    from CCCgistemp.code import step2
+    from code import step2
     if data is None:
         data = gio.step2_input()
     result = step2.step2(data)
     return gio.step2_output(result)
 
 def run_step3(data):
-    from CCCgistemp.code import step3
+    from code import step3
     if data is None:
         data = gio.step3_input()
     result = step3.step3(data)
@@ -77,16 +94,16 @@ def run_step3c(data):
     return gio.step3c_input()
 
 def run_step4(data):
-    from CCCgistemp.code import step4
+    from code import step4
     # Unlike earlier steps, Step 4 always gets input data, ocean
     # temperatures, from disk; data from earlier stages is land data and
     # is zipped up.
-    data = gio.step4_input(data)
+    data = gio.step4_input(data) 
     result = step4.step4(data)
     return gio.step4_output(result)
 
 def run_step5(data):
-    from CCCgistemp.code import step5
+    from code import step5
     # Step 5 takes a land mask as optional input, this is all handled in
     # the step5_input() function.
     data = gio.step5_input(data)
@@ -98,16 +115,13 @@ def vischeck(data):
     # Suck data through pipeline.
     for _ in data:
         pass
-    print("... running vischeck")
-    from CCCgistemp.tool import vischeck
-    try:
-        vischeck.chartit(
-          [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
-          out = open(os.path.join('result', 'google-chart.url'), 'w'))
-    except:  # Catching all. TODO: Check w/ David if ValueError is OK.
-        print "Unable to generate google chart."
-        yield "vischeck not completed"
-    print("See result/google-chart.url")
+    log("... running vischeck")
+    import vischeck
+    vischeck.chartit(
+      [open(os.path.join('result', 'mixedGLB.Ts.ho2.GHCN.CL.PA.txt'))],
+      out = open(os.path.join('result', 'google-chart.url'), 'w'))
+
+    log("See result/google-chart.url")
     yield "vischeck completed"
 
 def parse_steps(steps):
@@ -145,7 +159,7 @@ def parse_options(arglist):
             default="",
             help="Select range of steps to run")
     parser.add_option('-p', '--parameter', action='store', default='',
-        help="Redefine parameter from parameters.py during run")
+        help="Redefine parameter from parameters/*.py during run")
     parser.add_option("--no-work_files", "--suppress-work-files",
             action="store_false", default=True, dest="save_work",
             help="Do not save intermediate files in the work sub-directory")
@@ -158,12 +172,12 @@ def parse_options(arglist):
 
 def update_parameters(parm):
     """Take a parameter string from the command line and update the
-    parameters.py module."""
+    parameters module."""
 
     if not parm:
         return
 
-    from CCCgistemp.code import parameters
+    import parameters
 
     parm = parm.split(';')
     for p in parm:
@@ -203,9 +217,16 @@ def main(argv=None):
 
     step_list = options.steps
     try:
+        rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if os.getcwd() != rootdir:
+            raise Fatal("The GISTEMP procedure must be run from the root "
+                        "directory of the project.\nPlease change directory "
+                        "to %s and try again." % rootdir)
+
         # Carry out preflight checks and fetch missing files.
-        from CCCgistemp.tool import preflight
-        preflight.checkit(sys.stderr)
+        import fetch
+        fetcher = fetch.Fetcher()
+        fetcher.fetch()
 
         # Create all the temporary directories we're going to use.
         for d in ['log', 'result', 'work']:
@@ -220,7 +241,7 @@ def main(argv=None):
             '4': run_step4,
             '5': run_step5,
         }
-
+        
         # Record start time now, and ending times for each step.
         start_time = time.time()
 
@@ -241,7 +262,7 @@ def main(argv=None):
                 logit = "STEPS %s to %s" % (step_list[0], step_list[-1])
             else:
                 logit = "STEPS %s" % ', '.join(step_list)
-        print("====> %s  ====" % logit)
+        log("====> %s  ====" % logit)
         data = None
         for step in step_list:
             data = step_fn[step](data)
@@ -252,8 +273,8 @@ def main(argv=None):
             pass
 
         end_time = time.time()
-        print("====> Timing Summary ====")
-        print("Run took %.1f seconds" % (end_time - start_time))
+        log("====> Timing Summary ====")
+        log("Run took %.1f seconds" % (end_time - start_time))
 
         return 0
     except Fatal, err:

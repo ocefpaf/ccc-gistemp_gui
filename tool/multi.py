@@ -13,9 +13,15 @@ Run "python tool/multi.py commands" to see command list.
 """
 
 import extend_path
+import simplejson as json
 
+# http://docs.python.org/release/2.4.4/lib/module-getopt.html
+import getopt
+# http://docs.python.org/release/2.4.4/lib/module-itertools.html
+import itertools
 # http://docs.python.org/release/2.6.6/library/json.html
-import json
+# http://docs.python.org/release/2.4.4/lib/module-os.html
+import os
 import re
 import sys
 import urllib
@@ -70,39 +76,45 @@ def tablemonthlies(f):
         yield year,monthlies
 
 def timecount(argv):
-    """[command] [--mask maskfile] Count of stations used over time."""
+    """[command] [--mask maskfile] [--dir .] Count of stations
+    used over time."""
 
-    # http://docs.python.org/release/2.4.4/lib/module-getopt.html
-    import getopt
-    opts,arg = getopt.getopt(argv[1:], '', ['mask='])
+    opts,arg = getopt.getopt(argv[1:], '', ['dir=', 'mask='])
     option = dict((o[2:],v) for o,v in opts)
 
     counts(out=sys.stdout, **option)
 
-def counts(mask, out):
-    """Print to out a count for each month of the number of stations
-    used."""
+def counts(out, dir='.', mask=None):
+    """Print to *out* a count for each month of the number of stations
+    used.
     
-    log = open('log/step3.log')
-    cells = cellsofmask(open(mask))
+    *dir* specifies the name of a directory for the input files
+    (that are intermediate products of ccc-gistemp);
+    from this directory the files used are: 'log/step3.log' (to
+    determine what stations and months are used), and 'work/step2.v2'
+    (to determine which specific months of those stations have data
+    present).
+
+    *mask* specifies the name of a mask file to be used; only the
+    cells present in the mask file will be examined for station usage.
+    """
 
     # Dictionary that maps from station (12 char identifier) to
     # monthset, where *monthset* is a set of the numbers from 0
     # (January) to 11 (December).
     stationmonths = dict()
-    for row in log:
-        row = row.split(' ', 2)
-        if row[1] != 'stations':
-            continue
+
+    log = os.path.join(dir, 'log', 'step3.log')
+    step2 = os.path.join(dir, 'work', 'step2.v2')
+
+    for row in stations_logged(mask, log=log):
         stations = json.loads(row[2])
-        if row[0] in cells:
-            for station,weight,months in stations:
-                stationmonths[station] = monthset(months) | stationmonths.get(
-                  station, set())
+        for station,weight,months in stations:
+            stationmonths[station] = monthset(months) | stationmonths.get(
+              station, set())
 
     monthcount = {}
-    path = 'work/step2.v2'
-    for station in gio.GHCNV2Reader(path=path):
+    for station in gio.GHCNV2Reader(path=step2):
         if station.uid not in stationmonths:
             continue
         for m in stationvalidmonths(station):
@@ -141,46 +153,132 @@ def stationvalidmonths(record):
     first = record.first_month - 1
     return set(first+i for i,v in enumerate(record.series) if valid(v))
 
+def wherestations(argv):
+    """[command] [--inv v2.inv] stations [...]  Outputs the cells
+    (as a mask file) that are occupied by at least one station list in
+    any of the *stations* files.
+    """
+
+    opts,arg = getopt.getopt(argv[1:], '', ['inv='])
+    option = dict((o[2:],v) for o,v in opts)
+    where_stations(arg, out=sys.stdout, **option)
+
+def wherecells(argv):
+    """[command] step3.v2  Outputs the cells with data.
+    """
+
+    arg = argv[1:]
+    where_cells(arg, out=sys.stdout)
+
+here = os.path.abspath(__file__)
+parent = os.path.dirname(os.path.dirname(here))
+input = os.path.join(parent, 'input')
+
+def where_stations(stations=[], out=None,
+  inv=os.path.join(input, 'v2.inv')):
+    """Implementation of whatstations command."""
+
+    from code import eqarea
+    from code import giss_data
+
+    stations = set(l[:11] for l in
+      itertools.chain(*[open(f) for f in stations]) if ':' not in l)
+    meta = gio.station_metadata(path=inv)
+    assert meta
+    # Restrict meta to the set *stations*
+    meta = dict((uid,m) for uid,m in meta.iteritems() if uid in stations)
+
+    count = eqarea.GridCounter()
+    for s in meta.itervalues():
+        count(s.lat, s.lon)
+    for c,cell in count.boxes():
+        m = c > 0
+        out.write("%sMASK%.3f\n" % (giss_data.boxuid(cell), m))
+
+def where_cells(cells=[], out=None):
+    """Implementation of wherecells."""
+
+    from code import eqarea
+    from code import giss_data
+
+    cells = set(l[:11] for l in
+      itertools.chain(*[open(f) for f in cells]))
+    cells = [map(float, re.match(r'([-+]\d+\.\d+)([-+]\d+\.\d+)', l).groups())
+      for l in cells]
+    count = eqarea.GridCounter()
+    for lat,lon in cells:
+        count(lat, lon)
+    for c,cell in count.boxes():
+        m = c > 0
+        out.write("%sMASK%.3f\n" % (giss_data.boxuid(cell), m))
+
 def whatstations(argv):
-    """[command] [--mask maskfile]  Determines what (land) stations are
-    used for a particular area.
+    """[command] [--mask maskfile] [--log step3.log] Determines
+    what (land) stations are used for a particular area.
 
     whatstations --mask maskfile
 
-    Works by examing the log files.
+    Works by examining the Step 3 log file, which can be specified with
+    --log option.
     """
 
-    # http://docs.python.org/release/2.4.4/lib/module-getopt.html
-    import getopt
-    opts,arg = getopt.getopt(argv[1:], '', ['mask='])
+    opts,arg = getopt.getopt(argv[1:], '', ['log=', 'mask='])
     option = dict((o[2:],v) for o,v in opts)
     stations(out=sys.stdout, **option)
 
-def stations(mask, out):
-    """Print to *out* a list of the stations used."""
+def stations_logged(mask=None, log='log/step3.log'):
+    """An iterator that yields each of the log records from step3 that
+    identify the stations used (that is, the second item in the row is
+    "stations").  *mask* (optionally) specifies the name of a cell mask
+    file; when used only the cells present in the mask are examined.
+    *log* specifies the name of the log file to examine.
 
-    log = open('log/step3.log')
-    cells = cellsofmask(open(mask))
+    Each log record is yielded as a triple (cellid, 'stations',
+    JSONstring).  *JSONstring* is a string suitable for passing to
+    json.loads().
+    """
 
-    allstations = dict()
-    cellcount = 0
+    log = open(log)
+    if mask:
+        cells = cellsofmask(open(mask))
+
     for row in log:
         row = row.split(' ', 2)
         if row[1] != 'stations':
             continue
-        stations = json.loads(row[2])
-        if row[0] in cells:
-            for item in stations:
-                station,weight = item[:2]
-                if weight:
-                    allstations[station] = max(
-                      allstations.get(station, 0), weight)
-            cellcount += 1
+        if not mask or row[0] in cells:
+            yield row
 
-    print >>out, "Cells: %d/%d" % (cellcount, len(cells))
-    print >>out, "Stations: %d" % len(allstations)
-    for station,weight in sorted(allstations.iteritems()):
-        print >>out, station, weight
+def stations(out, log='log/step3.log', mask=None):
+    """Print to *out* a list of the stations used."""
+
+    station_weight = dict()
+    station_months = dict()
+    cellcount = 0
+    for row in stations_logged(log=log, mask=mask):
+        stations = json.loads(row[2])
+        for item in stations:
+            station,weight,months = item[:3]
+            if weight:
+                station_weight[station] = max(
+                  station_weight.get(station, 0), weight)
+                station_months[station] = station_months.get(
+                  station, set()) | monthset(months)
+        cellcount += 1
+    
+    def asstr(s):
+        """Convert set of months to string."""
+
+        return ''.join('01'[i in s] for i in range(12))
+
+    if mask:
+        ncells = len(cellsofmask(open(mask)))
+    else:
+        ncells = 8000
+    print >>out, "Cells: %d/%d" % (cellcount, ncells)
+    print >>out, "Stations: %d" % len(station_weight)
+    for station,weight in sorted(station_weight.iteritems()):
+        print >>out, station, asstr(station_months[station]), weight
 
 def cellsofmask(inp):
     """*inp* is an open mask file.  The returned value is a set of all
@@ -188,6 +286,55 @@ def cellsofmask(inp):
     value."""
 
     return set(row[:12] for row in inp if float(row[16:21]))
+
+def maskmap(argv):
+    """[command] [--class css-class] mask  Draws an SVG map of the
+    cells in mask."""
+
+    opts,arg = getopt.getopt(argv[1:], '', ['class='])
+    option = dict((o[2:],v) for o,v in opts)
+
+    from code import eqarea
+
+    maskfile = arg[0]
+    out = sys.stdout
+
+    def transform(p):
+        u"""Transform p=(lat,lon) into (x,y) used for map system.  Which
+        in this case is Plate Carr\xe9e with x from 0 to 720, and y from
+        0 to 360."""
+
+        lat,lon = p
+        y = (90+lat)*2
+        x = (180+lon)*2
+        return x,y
+
+    out.write("""<svg 
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      version="1.1">\n""")
+    out.write("""<defs>
+  <style type="text/css">
+    path.m0 { stroke: none; fill: rgb(0,0,0); fill-opacity: 0.0; }
+    path.m1 { stroke: none; fill: rgb(255,0,0); fill-opacity: 0.4; }
+  </style>\n</defs>
+""")
+
+    class_ = option.get('class', 'mask')
+
+    out.write("<g class='%s' transform='translate(0,360) scale(1,-1)'>\n" %
+      class_)
+    cells = eqarea.grid8k()
+    for v,box in gio.maskboxes(open(maskfile), cells):
+        s,n,w,e = box
+        corners = [(n,w), (n,e), (s,e), (s,w)]
+        corners = map(transform, corners)
+        out.write("<path class='m%.0f'" % v +
+          " d='M %.2f %.2f L" % corners[0] +
+          " %.2f"*6 % tuple(itertools.chain(*corners[1:])) +
+          " z' />\n")
+    out.write("</g>\n")
+    out.write("</svg>\n")
 
 
 def cmpcontributors(arg):
@@ -261,7 +408,7 @@ def celldict(f):
 
 def reportinonelist(cell, name, culprit, weight):
     """For the cell and logfile identified by the strings *cell*
-    and *name, print a report of the stations contributing to
+    and *name*, print a report of the stations contributing to
     that cell that appear only in that file (and not in the
     corresponding cell in the other file).  *culprit* is a
     sequence of the station identifiers, *weight* is a dict that
@@ -339,8 +486,6 @@ def nature201102(arg):
     """Generate SVG for image as per Nature's request.
     (expects to find a completed result directory).
     """
-
-    import os
 
     # Download GISTEMP global result and copy together with the global
     # result on local disk to a GHCN v2 format file, 'nature.v2'
@@ -552,13 +697,13 @@ def VdotV(u, v):
 def commands(arg):
     """[command] Show command list."""
 
-    rx = re.compile(r'\[command] *')
+    prefix = re.compile(r'\[command] *')
 
     for name,f in members.items():
         doc = getattr(f, '__doc__')
-        if doc and rx.match(doc):
-            doc = rx.sub('', doc)
-            doc = doc.replace('\n', '')
+        if doc and prefix.match(doc):
+            doc = prefix.sub('', doc)
+            doc = re.sub(r'\n *', ' ', doc)
             doc = re.sub(r'[;.] +.*', '.', doc)
             print name, ':', doc
 

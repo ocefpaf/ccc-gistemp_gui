@@ -7,9 +7,9 @@ David Jones, Climate Code Foundation, 2010-11-30
 
 INTRODUCTION
 
-This is the documented procedure for making a release of ccc-gistemp
+This is the documented procedure for maing a release of ccc-gistemp
 
-The intended readership is developers that need to make a release.
+The intended readership is developers that need to make a relelase.
 
 This document is not finished.
 
